@@ -46,18 +46,24 @@ export default {
     },
     computed: {
         weatherDataMap() {
-            return this.weatherData.properties.timeseries.map(item => ({
-                time: item.time,
-                air_temperature: item.data.instant.details.air_temperature,
-                air_pressure: item.data.instant.details.air_pressure_at_sea_level,
-                relative_humidity: item.data.instant.details.relative_humidity,
-                wind_speed: item.data.instant.details.wind_speed,
-            }));
+            if (this.weatherData.length) {
+                return this.weatherData[0].properties.timeseries.map(item => ({
+                    time: item.time,
+                    air_temperature: item.data.instant.details.air_temperature,
+                    air_pressure: item.data.instant.details.air_pressure_at_sea_level,
+                    relative_humidity: item.data.instant.details.relative_humidity,
+                    wind_speed: item.data.instant.details.wind_speed,
+                }));
+            }
+return [];
 
         },
 
     },
     methods: {
+        fetchWeatherData() {
+            
+        },
         formatDate(dateString) {
             return format(parseISO(dateString), "dd MMMM yyyy HH:mm", { locale: ru });
         },
