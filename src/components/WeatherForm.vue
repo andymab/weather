@@ -26,8 +26,9 @@
             <!-- <div v-if="comparisonWeatherData">
                 <WeatherChart :weatherData="comparisonWeatherData" />
             </div> -->
-            <WeatherDataTable :weatherData=weatherData />
+            <WeatherDataTable :weatherData=weatherData :selectedLocations="selectedLocations"/>
         </div>
+        <v-alert text="Наблюдение за изменениями: Резкое увеличение относительной влажности или абсолютной влажности в сочетании с падением температуры и снижением атмосферного давления может служить хорошим индикатором приближающегося дождя."></v-alert>
     </v-container>
 </template>
 

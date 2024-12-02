@@ -14,7 +14,7 @@
                 {{ formatDate(item.time) }}
             </template>
             <template v-slot:item.air_pressure="{ item }">
-                {{ formatHpa(item.air_pressure) }}
+                {{ formatHpa(item.air_pressure,580) }}
             </template>
             <template v-slot:no-data>
                 <v-alert type="info" icon="info">
@@ -33,6 +33,10 @@ export default {
     name: 'WeatherDataTable',
     props: {
         weatherData: Array,
+        selectedLocations: {
+            type: Array,
+            required: true,
+        },
 
     },
     data() {
@@ -70,7 +74,11 @@ return [];
             return format(parseISO(dateString), "dd MMMM yyyy HH:mm", { locale: ru });
         },
         formatHpa(hPa) {
-            return (hPa * 0.75006375541921).toFixed(2); 
+            const height = this.selectedLocations[0].heigth;
+            const barometricStep = 8;
+            const pressureChange = height / barometricStep;
+            return ((hPa - pressureChange) * 0.75006375541921).toFixed(2);
+          //  return ((hPa-(570/1000 * 12))).toFixed(2); 
         },        
     },
     mounted() {
