@@ -13,7 +13,9 @@
             <template v-slot:item.time="{ item }">
                 {{ formatDate(item.time) }}
             </template>
-
+            <template v-slot:item.air_pressure="{ item }">
+                {{ formatHpa(item.air_pressure) }}
+            </template>
             <template v-slot:no-data>
                 <v-alert type="info" icon="info">
                     Нет доступных данных.
@@ -38,7 +40,7 @@ export default {
             headers: [
                 { title: 'Дата и время', key: 'time' },
                 { title: 'Температура (°C)', key: 'air_temperature' },
-                { title: 'Давление (hPa)', key: 'air_pressure' },
+                { title: 'Давление (мм.ст)', key: 'air_pressure' },
                 { title: 'Влажность (%)', key: 'relative_humidity' },
                 { title: 'Скорость ветра (m/s)', key: 'wind_speed' },
             ],
@@ -62,11 +64,14 @@ return [];
     },
     methods: {
         fetchWeatherData() {
-            
+
         },
         formatDate(dateString) {
             return format(parseISO(dateString), "dd MMMM yyyy HH:mm", { locale: ru });
         },
+        formatHpa(hPa) {
+            return (hPa * 0.75006375541921).toFixed(2); 
+        },        
     },
     mounted() {
 
