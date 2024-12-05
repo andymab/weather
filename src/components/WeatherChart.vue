@@ -20,6 +20,10 @@ export default {
             type: Array,
             required: true,
         },
+        title:{
+            type: String,
+            required: true,
+        },
     },
     watch: {
         weatherData: {
@@ -40,10 +44,7 @@ export default {
             return format(parseISO(dateString), "dd MMMM yyyy HH:mm", { locale: ru });
         },
         renderChart() {
-            console.log('стартуем');
             if (this.weatherData.length === 0) return;
-
-            console.log('this.weatherData', this.weatherData);
 
             const temperature = [];
             const pressure = [];
@@ -55,18 +56,6 @@ export default {
             if (this.weatherData.length) {
                 categories = this.weatherData[0].properties.timeseries.map(item => this.formatDate(item.time));
             }
-
-
-
-           // console.log('categories', categories, 'temperature', temperature, 'pressure', pressure, 'humidity', humidity, 'windSpeed', windSpeed);
-
-
-            // this.weatherData[0].properties.timeseries.forEach(item => {
-            //     temperature.push(item.data.instant.details.air_temperature);
-            //     pressure.push(item.data.instant.details.air_pressure_at_sea_level);
-            //     humidity.push(item.data.instant.details.relative_humidity);
-            //     windSpeed.push(item.data.instant.details.wind_speed);
-            // });
 
             const seriesData = [];
             if (this.weatherData.length) {
@@ -84,7 +73,7 @@ export default {
                     });
 
                     seriesData.push({
-                        name: `Температура (°C) - ${this.selectedLocations[index].label}`,
+                        name: `${this.title} - ${this.selectedLocations[index].label}`,
                         data: seriesTemperature,
                     });
 
@@ -97,28 +86,17 @@ export default {
                     type: 'column',
                 },
                 title: {
-                    text: 'Погодные условия',
+                    text: this.title,
                 },
                 xAxis: {
                     categories: categories, //['Температура (°C)', 'Давление (hPa)', 'Влажность (%)', 'Скорость ветра (m/s)'],
                 },
                 yAxis: {
                     title: {
-                        text: 'Значение',
+                        text: this.title,
                     },
                 },
                 series: seriesData,
-                // , {
-                //     name: 'Давление (hPa)',
-                //     data: pressure,
-                // }, {
-                //     name: 'Влажность (%)',
-                //     data: humidity,
-                // }, {
-                //     name: 'Скорость ветра (m/s)',
-                //     data: windSpeed,
-                // },
-                //  ],
             });
         },
     },

@@ -1,7 +1,7 @@
 <template>
     <v-app>
-      <v-main class="background">
-        <v-container fluid class="mx-auto" max-width="1600">
+      <v-main class="background " >
+        <v-container fluid class="mx-auto" >
           <router-view />
         </v-container>
       </v-main>
@@ -15,7 +15,8 @@
 
     data() {
       return {
-  
+ 
+
       }
     },
     async mounted() {
