@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div ref="weatherChart" style="height: 400px;"></div>
+        <div ref="weatherChart" style="height: 400px;" class="mb-4"></div>
     </div>
 </template>
 
@@ -20,7 +20,7 @@ export default {
             type: Array,
             required: true,
         },
-        title:{
+        title: {
             type: String,
             required: true,
         },
@@ -30,8 +30,8 @@ export default {
             handler(newData) {
                 this.renderChart();
             },
-                deep: true,
-      
+            deep: true,
+
         },
     },
     mounted() {
@@ -41,7 +41,7 @@ export default {
     },
     methods: {
         formatDate(dateString) {
-            return format(parseISO(dateString), "dd MMMM yyyy HH:mm", { locale: ru });
+            return format(parseISO(dateString), "dd.MM HH:mm", { locale: ru }); // "dd MMMM yyyy HH:mm"
         },
         renderChart() {
             if (this.weatherData.length === 0) return;
@@ -54,7 +54,7 @@ export default {
             let categories = [];
 
             if (this.weatherData.length) {
-                categories = this.weatherData[0].properties.timeseries.map(item => this.formatDate(item.time));
+                categories = this.weatherData[0].properties.timeseries.map(item => this.formatDate(item.time)); //this.formatDate(item.time)
             }
 
             const seriesData = [];
@@ -78,6 +78,7 @@ export default {
                     });
 
                 });
+
             }
 
 
@@ -89,7 +90,8 @@ export default {
                     text: this.title,
                 },
                 xAxis: {
-                    categories: categories, //['Температура (°C)', 'Давление (hPa)', 'Влажность (%)', 'Скорость ветра (m/s)'],
+                    categories: categories, 
+                    
                 },
                 yAxis: {
                     title: {

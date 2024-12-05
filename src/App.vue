@@ -1,7 +1,7 @@
 <template>
-    <v-app>
-      <v-main class="background " >
-        <v-container fluid class="mx-auto" >
+    <v-app >
+      <v-main class="background"  >
+        <v-container fluid class="mx-auto pa-0" >
           <router-view />
         </v-container>
       </v-main>
