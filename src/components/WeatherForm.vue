@@ -46,10 +46,8 @@
                 <v-row>
                     <v-col md="2" v-for="(item, index) in weatherData[0].properties.timeseries" :key="`card-${index}`">
                         <v-card>
-                            <v-card-title>
-                                <div>
+                            <v-card-title class="py-0">
                                     <small style="font-size:0.8rem;">{{ formatDate(item.time) }}</small>
-                                </div>
                             </v-card-title>
                             <v-card-text>
                                 <v-row>
