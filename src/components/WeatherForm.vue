@@ -1,19 +1,26 @@
 <template>
     <div>
         <v-navigation-drawer app v-model="drawer" permanent>
-            <v-form @submit.prevent="getWeather" width="100%">
+            <v-form ref="form" @submit.prevent="getWeather" width="100%">
                 <v-container fluid>
 
                     <v-row>
                         <v-col cols="12" md="12" v-for="(location, index) in selectedLocations">
                             <v-select v-model="selectedLocations[index]" :items="locations" label="Выберите место"
-                                required item-text="title" item-value="value"></v-select>
+                                required item-text="title" item-value="value" variant="outlined" hide-details
+                                density="comfortable" :rules="rules">
+                            </v-select>
                         </v-col>
                     </v-row>
-                    <v-btn @click="addLocation">Добавить место</v-btn>
+                    <div class="d-flex mt-4">
 
+                        <v-btn icon type="submit" class=""
+                            color="primary"><v-icon>mdi-chart-bar-stacked</v-icon></v-btn>
+                        <v-spacer></v-spacer>
+                        <v-btn icon @click="addLocation"> <v-icon>mdi-plus</v-icon></v-btn>
 
-                    <v-btn type="submit" class="ma-4" color="primary">Получить погоду</v-btn>
+                    </div>
+
 
                 </v-container>
             </v-form>
@@ -23,11 +30,11 @@
         <v-container fluid class="pt-0">
             <v-toolbar app>
                 <v-btn icon @click="drawer = !drawer">
-                    <v-icon>mdi-cog</v-icon>
+                    <v-icon>{{ !drawer ? 'mdi-chevron-right' : 'mdi-chevron-left' }}</v-icon>
                 </v-btn>
                 <v-spacer></v-spacer>
                 <v-toolbar-title>Погода {{ period }}</v-toolbar-title>
-                
+
 
             </v-toolbar>
 
@@ -49,7 +56,13 @@
                                     <!-- Левая часть - изображение -->
                                     <v-col cols="6" class="pa-1">
                                         <v-img v-if="item.data.next_1_hours && item.data.next_1_hours.summary"
-                                            :src="`/public/icons/${item.data.next_1_hours.summary.symbol_code}.svg`"
+                                            :src="`/icons/${item.data.next_1_hours.summary.symbol_code}.svg`"
+                                            height="60"></v-img>
+                                        <v-img v-else-if="item.data.next_6_hours && item.data.next_6_hours.summary"
+                                            :src="`/icons/${item.data.next_6_hours.summary.symbol_code}.svg`"
+                                            height="60"></v-img>
+                                        <v-img v-else-if="item.data.next_12_hours && item.data.next_12_hours.summary"
+                                            :src="`/icons/${item.data.next_12_hours.summary.symbol_code}.svg`"
                                             height="60"></v-img>
                                     </v-col>
                                     <v-col cols="6" class="text-left pa-0">
@@ -67,7 +80,7 @@
                     </v-col>
                 </v-row>
 
-                <WeatherDataTable :weatherData=weatherData :selectedLocations="selectedLocations" />
+                <!-- <WeatherDataTable :weatherData=weatherData :selectedLocations="selectedLocations" /> -->
             </div>
 
 
@@ -95,29 +108,30 @@ export default {
         return {
             drawer: false,
             selectedLocations: [''],
-            selectedComparisonLocation: null,
-            latitude: null,
-            longitude: null,
             weatherData: [],
-            comparisonWeatherData: null,
-            locations,
-            navItems: [
-                { title: 'Главная', route: '/' },
-                //{ title: 'Настройки', route: '/settings' },
-                // Добавьте другие элементы навигации по мере необходимости
+            rules: [value => {
+                if (value) return true
+                return 'You must enter a first name.'
+            }
             ],
+
+
         };
     },
     computed: {
+        locations() {
+            return locations;
+        },
         period() {
             if (this.weatherData.length > 0 && this.weatherData[0].properties.timeseries.length > 20) {
-                const data  = this.weatherData[0].properties.timeseries;
+                const data = this.weatherData[0].properties.timeseries;
                 const fistTime = this.formatDate(data[0].time);
                 const lastTime = this.formatDate(data[data.length - 1].time);
                 return `${fistTime} - ${lastTime}`;
-            } 
+            }
             return '';
-        }
+        },
+
     },
     methods: {
         formatDate(dateString) {
@@ -137,24 +151,28 @@ export default {
             if (degrees >= 292.5 && degrees < 337.5) return 'СЗ';
         },
         async getWeather() {
+
             this.weatherData = [];
-            // Получаем данные для местоположения для сравнения
-            if (this.selectedComparisonLocation) {
-                const comparisonCoords = this.selectedComparisonLocation;
-                this.comparisonLatitude = comparisonCoords.lat;
-                this.comparisonLongitude = comparisonCoords.lon;
-            }
-
-
             try {
                 for (const index in this.selectedLocations) {
-                    const response = await axios.get(`https://api.met.no/weatherapi/locationforecast/2.0/compact`, {
-                        params: {
-                            lat: this.selectedLocations[index].lat,
-                            lon: this.selectedLocations[index].lon,
-                        },
-                    });
-                    this.weatherData.push(response.data);
+                    const location = this.selectedLocations[index];
+
+                    // Check if lat and lon are defined and not empty
+                    if (location && location.lat && location.lon) {
+                        try {
+                            const response = await axios.get(`https://api.met.no/weatherapi/locationforecast/2.0/compact`, {
+                                params: {
+                                    lat: location.lat,
+                                    lon: location.lon,
+                                },
+                            });
+                            this.weatherData.push(response.data);
+                        } catch (error) {
+                            console.error(`Error fetching weather data for location at index ${index}:`, error);
+                        }
+                    } else {
+                        console.warn(`Location at index ${index} is invalid. Lat: ${location ? location.lat : 'undefined'}, Lon: ${location ? location.lon : 'undefined'}`);
+                    }
                 }
             } catch (error) {
                 console.error('Ошибка получения данных о погоде:', error);

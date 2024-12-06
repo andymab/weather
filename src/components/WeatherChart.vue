@@ -46,16 +46,40 @@ export default {
         renderChart() {
             if (this.weatherData.length === 0) return;
 
-            const temperature = [];
-            const pressure = [];
-            const humidity = [];
-            const windSpeed = [];
+            // const temperature = [];
+            // const pressure = [];
+            // const humidity = [];
+            // const windSpeed = [];
 
-            let categories = [];
 
-            if (this.weatherData.length) {
-                categories = this.weatherData[0].properties.timeseries.map(item => this.formatDate(item.time)); //this.formatDate(item.time)
-            }
+            const timeseries = this.weatherData[0].properties.timeseries;
+            const categories = timeseries.map(item => this.formatDate(item.time));
+            const plotLines = categories.map((item, index) => {
+                if (index === 0) return;
+                const date = item.split('.')[0];
+                const olddate = categories[index - 1].split('.')[0];
+                if (date !== olddate) {
+                    return {
+                        color: '#FF0000',
+                        value: index,
+                        width: 1,
+                        label: {
+                            text: date,
+                            align: 'center',
+                            verticalAlign: 'top',
+                            style: {
+                                color: '#FF0000',
+                            },
+                        },
+                    };
+                } else {
+                    return;
+                } 
+            
+            }).filter(line => line !== undefined);;
+
+
+            console.log('plotLines', plotLines);
 
             const seriesData = [];
             if (this.weatherData.length) {
@@ -90,8 +114,11 @@ export default {
                     text: this.title,
                 },
                 xAxis: {
-                    categories: categories, 
+                    categories: categories,
+                    plotLines
                     
+
+
                 },
                 yAxis: {
                     title: {
