@@ -39,8 +39,7 @@
             </v-toolbar>
 
             <div v-if="weatherData.length && weatherData[0].properties.timeseries.length > 20">
-                <WeatherChart :weatherData="weatherData" :selectedLocations="selectedLocations"
-                    :title="`Температура (°C)`" />
+                <WeatherChart :weatherData="weatherData" :selectedLocations="selectedLocations" />
 
 
                 <v-row>
@@ -135,8 +134,10 @@
         methods: {
             async fetchLocations() {
                 try {
-                    const response = await fetch('/locations.json'); // Замените на URL вашего JSON
+                    const response = await fetch('/locations.json'); 
                     this.locations = await response.json();
+                    this.selectedLocations[0] = this.locations[0].value;
+                    this.getWeather();
                 } catch (error) {
                     console.error('Ошибка при загрузке данных:', error);
                 }
@@ -161,11 +162,13 @@
 
                 this.weatherData = [];
                 try {
-                    for (const index in this.selectedLocations) {
-                        const location = this.selectedLocations[index];
+                    // this.selectedLocations.forEach(location => {
 
-                        // Check if lat and lon are defined and not empty
+                     for (const index in this.selectedLocations) {
+                        const location = this.selectedLocations[index];
+                      
                         if (location && location.lat && location.lon) {
+              
                             try {
                                 const response = await axios.get(`https://api.met.no/weatherapi/locationforecast/2.0/compact`, {
                                     params: {
@@ -180,7 +183,7 @@
                         } else {
                             console.warn(`Location at index ${index} is invalid. Lat: ${location ? location.lat : 'undefined'}, Lon: ${location ? location.lon : 'undefined'}`);
                         }
-                    }
+                    };
                 } catch (error) {
                     console.error('Ошибка получения данных о погоде:', error);
                     alert('Не удалось получить данные о погоде. Проверьте координаты.');
