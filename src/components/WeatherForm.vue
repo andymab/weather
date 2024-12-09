@@ -47,7 +47,7 @@
                     <v-col md="2" v-for="(item, index) in weatherData[0].properties.timeseries" :key="`card-${index}`">
                         <v-card>
                             <v-card-title class="py-0">
-                                    <small style="font-size:0.8rem;">{{ formatDate(item.time) }}</small>
+                                <small style="font-size:0.8rem;">{{ formatDate(item.time) }}</small>
                             </v-card-title>
                             <v-card-text>
                                 <v-row>
@@ -90,97 +90,106 @@
 </template>
 
 <script>
-import axios from 'axios';
-import WeatherChart from './WeatherChart.vue';
-import WeatherDataTable from './WeatherDataTable.vue';
-import locations from '../config/locations';
-import { format, parseISO } from 'date-fns';
-import { ru } from 'date-fns/locale';
+    import axios from 'axios';
+    import WeatherChart from './WeatherChart.vue';
+    import WeatherDataTable from './WeatherDataTable.vue';
 
-export default {
-    name: 'WeatherForm',
-    components: {
-        WeatherDataTable, WeatherChart,
-    },
-    data() {
-        return {
-            drawer: false,
-            selectedLocations: [''],
-            weatherData: [],
-            rules: [value => {
-                if (value) return true
-                return 'You must enter a first name.'
-            }
-            ],
+    import { format, parseISO } from 'date-fns';
+    import { ru } from 'date-fns/locale';
 
-
-        };
-    },
-    computed: {
-        locations() {
-            return locations;
+    export default {
+        name: 'WeatherForm',
+        components: {
+            WeatherDataTable, WeatherChart,
         },
-        period() {
-            if (this.weatherData.length > 0 && this.weatherData[0].properties.timeseries.length > 20) {
-                const data = this.weatherData[0].properties.timeseries;
-                const fistTime = this.formatDate(data[0].time);
-                const lastTime = this.formatDate(data[data.length - 1].time);
-                return `${fistTime} - ${lastTime}`;
-            }
-            return '';
-        },
-
-    },
-    methods: {
-        formatDate(dateString) {
-            return format(parseISO(dateString), "dd MMMM HH:mm", { locale: ru });
-        },
-        addLocation() {
-            this.selectedLocations.push('');
-        },
-        getWindDirection(degrees) {
-            if (degrees >= 337.5 || degrees < 22.5) return 'С';
-            if (degrees >= 22.5 && degrees < 67.5) return 'СВ';
-            if (degrees >= 67.5 && degrees < 112.5) return 'В';
-            if (degrees >= 112.5 && degrees < 157.5) return 'ЮВ';
-            if (degrees >= 157.5 && degrees < 202.5) return 'Ю';
-            if (degrees >= 202.5 && degrees < 247.5) return 'ЮЗ';
-            if (degrees >= 247.5 && degrees < 292.5) return 'З';
-            if (degrees >= 292.5 && degrees < 337.5) return 'СЗ';
-        },
-        async getWeather() {
-
-            this.weatherData = [];
-            try {
-                for (const index in this.selectedLocations) {
-                    const location = this.selectedLocations[index];
-
-                    // Check if lat and lon are defined and not empty
-                    if (location && location.lat && location.lon) {
-                        try {
-                            const response = await axios.get(`https://api.met.no/weatherapi/locationforecast/2.0/compact`, {
-                                params: {
-                                    lat: location.lat,
-                                    lon: location.lon,
-                                },
-                            });
-                            this.weatherData.push(response.data);
-                        } catch (error) {
-                            console.error(`Error fetching weather data for location at index ${index}:`, error);
-                        }
-                    } else {
-                        console.warn(`Location at index ${index} is invalid. Lat: ${location ? location.lat : 'undefined'}, Lon: ${location ? location.lon : 'undefined'}`);
-                    }
+        data() {
+            return {
+                drawer: false,
+                selectedLocations: [''],
+                locations:[],
+                weatherData: [],
+                rules: [value => {
+                    if (value) return true
+                    return 'You must enter a first name.'
                 }
-            } catch (error) {
-                console.error('Ошибка получения данных о погоде:', error);
-                alert('Не удалось получить данные о погоде. Проверьте координаты.');
-            }
+                ],
+
+
+            };
         },
-    },
-};
+        mounted() {
+            this.fetchLocations();
+        },
+        computed: {
+            period() {
+                if (this.weatherData.length > 0 && this.weatherData[0].properties.timeseries.length > 20) {
+                    const data = this.weatherData[0].properties.timeseries;
+                    const fistTime = this.formatDate(data[0].time);
+                    const lastTime = this.formatDate(data[data.length - 1].time);
+                    return `${fistTime} - ${lastTime}`;
+                }
+                return '';
+            },
+
+        },
+        methods: {
+            async fetchLocations() {
+                try {
+                    const response = await fetch('/locations.json'); // Замените на URL вашего JSON
+                    this.locations = await response.json();
+                } catch (error) {
+                    console.error('Ошибка при загрузке данных:', error);
+                }
+            },
+            formatDate(dateString) {
+                return format(parseISO(dateString), "dd MMMM HH:mm", { locale: ru });
+            },
+            addLocation() {
+                this.selectedLocations.push('');
+            },
+            getWindDirection(degrees) {
+                if (degrees >= 337.5 || degrees < 22.5) return 'С';
+                if (degrees >= 22.5 && degrees < 67.5) return 'СВ';
+                if (degrees >= 67.5 && degrees < 112.5) return 'В';
+                if (degrees >= 112.5 && degrees < 157.5) return 'ЮВ';
+                if (degrees >= 157.5 && degrees < 202.5) return 'Ю';
+                if (degrees >= 202.5 && degrees < 247.5) return 'ЮЗ';
+                if (degrees >= 247.5 && degrees < 292.5) return 'З';
+                if (degrees >= 292.5 && degrees < 337.5) return 'СЗ';
+            },
+            async getWeather() {
+
+                this.weatherData = [];
+                try {
+                    for (const index in this.selectedLocations) {
+                        const location = this.selectedLocations[index];
+
+                        // Check if lat and lon are defined and not empty
+                        if (location && location.lat && location.lon) {
+                            try {
+                                const response = await axios.get(`https://api.met.no/weatherapi/locationforecast/2.0/compact`, {
+                                    params: {
+                                        lat: location.lat,
+                                        lon: location.lon,
+                                    },
+                                });
+                                this.weatherData.push(response.data);
+                            } catch (error) {
+                                console.error(`Error fetching weather data for location at index ${index}:`, error);
+                            }
+                        } else {
+                            console.warn(`Location at index ${index} is invalid. Lat: ${location ? location.lat : 'undefined'}, Lon: ${location ? location.lon : 'undefined'}`);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Ошибка получения данных о погоде:', error);
+                    alert('Не удалось получить данные о погоде. Проверьте координаты.');
+                }
+            },
+        },
+    };
 </script>
 
 <style scoped>
-/* Добавьте стили по необходимости */
+    /* Добавьте стили по необходимости */
 </style>
