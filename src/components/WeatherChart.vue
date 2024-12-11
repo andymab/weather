@@ -78,7 +78,7 @@
                 this.chartOptions.yAxis.title.text=`${this.tabList[this.activeTab].caption}`;
                 this.chartOptions.series = this.tabList[this.activeTab].series;
                 this.chartOptions.chart.type = this.tabList[this.activeTab].type;
-                this.renderChart(); // Перерисовываем график
+                this.renderChart(); 
             },
             renderChart() {
                 Highcharts.chart(this.$refs.weatherChart, this.chartOptions);

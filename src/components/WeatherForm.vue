@@ -25,6 +25,35 @@
                 </v-container>
             </v-form>
 
+            <v-form ref="custom-form" @submit.prevent="getCustomWeather" width="100%">
+
+                <v-container fluid>
+                    <v-row>
+                        <v-col md="12">
+                            <v-text-field label="Место" variant="outlined" hide-details="auto" density="comfortable"
+                                required :rules="[rules.required]"></v-text-field>
+                        </v-col>
+                        <v-col md="12">
+                            <v-text-field label="Широта" variant="outlined" hide-details="auto" density="comfortable"
+                                required :rules="[rules.required,rules.isfloat]"></v-text-field>
+                        </v-col>
+                        <v-col md="12">
+                            <v-text-field label="Долгота" variant="outlined" hide-details="auto" density="comfortable"
+                                required :rules="[rules.required,rules.isfloat]"></v-text-field>
+                        </v-col>
+
+                    </v-row>
+
+                    <div class="d-flex mt-4">
+
+                        <v-btn icon type="submit" class=""
+                            color="primary"><v-icon>mdi-chart-bar-stacked</v-icon></v-btn>
+                        <!-- <v-spacer></v-spacer>
+                    <v-btn icon @click="addLocation"> <v-icon>mdi-plus</v-icon></v-btn> -->
+
+                    </div>
+                </v-container>
+            </v-form>
         </v-navigation-drawer>
 
         <v-container fluid class="pt-0">
@@ -89,34 +118,39 @@
 </template>
 
 <script>
-    import axios from 'axios';
-    import WeatherChart from './WeatherChart.vue';
-    import WeatherDataTable from './WeatherDataTable.vue';
+import axios from 'axios';
+import WeatherChart from './WeatherChart.vue';
+import WeatherDataTable from './WeatherDataTable.vue';
 
-    import { format, parseISO } from 'date-fns';
-    import { ru } from 'date-fns/locale';
+import { format, parseISO } from 'date-fns';
+import { ru } from 'date-fns/locale';
 
-    export default {
-        name: 'WeatherForm',
-        components: {
-            WeatherDataTable, WeatherChart,
-        },
-        data() {
-            return {
-                drawer: false,
-                selectedLocations: [''],
-                locations:[],
-                weatherData: [],
-                rules: [value => {
-                    if (value) return true
-                    return 'You must enter a first name.'
-                }
-                ],
+export default {
+    name: 'WeatherForm',
+    components: {
+        WeatherDataTable, WeatherChart,
+    },
+    data() {
+        return {
+            drawer: false,
+            selectedLocations: [''],
+            locations: [],
+            weatherData: [],
+            rules: {
+                required: value => !!value || 'Required.',
+                isfloat: value => {
+                    return /^\d{2}\.\d{1,3}$/.test(value) || 'Должны быть цифры и точка. ##.###';
+                },
+                counter: value => value.length <= 20 || 'Max 20 characters',
+                email: value => {
+                    const pattern = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+                    return pattern.test(value) || 'Invalid e-mail.'
+                },
 
-
-            };
-        },
-        mounted() {
+            },
+        };
+    },
+            mounted() {
             this.fetchLocations();
         },
         computed: {
@@ -132,9 +166,13 @@
 
         },
         methods: {
-            async fetchLocations() {
+
+            getCustomWeather() {
+
+            },
+        async fetchLocations() {
                 try {
-                    const response = await fetch('/locations.json'); 
+                    const response = await fetch('/locations.json');
                     this.locations = await response.json();
                     this.selectedLocations[0] = this.locations[0].value;
                     this.getWeather();
@@ -158,17 +196,17 @@
                 if (degrees >= 247.5 && degrees < 292.5) return 'З';
                 if (degrees >= 292.5 && degrees < 337.5) return 'СЗ';
             },
-            async getWeather() {
+        async getWeather() {
 
                 this.weatherData = [];
                 try {
                     // this.selectedLocations.forEach(location => {
 
-                     for (const index in this.selectedLocations) {
+                    for (const index in this.selectedLocations) {
                         const location = this.selectedLocations[index];
-                      
+
                         if (location && location.lat && location.lon) {
-              
+
                             try {
                                 const response = await axios.get(`https://api.met.no/weatherapi/locationforecast/2.0/compact`, {
                                     params: {
@@ -194,5 +232,5 @@
 </script>
 
 <style scoped>
-    /* Добавьте стили по необходимости */
+/* Добавьте стили по необходимости */
 </style>
