@@ -8,7 +8,7 @@
                         <v-col cols="12" md="12" v-for="(location, index) in selectedLocations">
                             <v-select v-model="selectedLocations[index]" :items="locations" label="Выберите место"
                                 required item-text="title" item-value="value" variant="outlined" hide-details
-                                density="comfortable" :rules="rules">
+                                density="comfortable" :rules="[rules.required]">
                             </v-select>
                         </v-col>
                     </v-row>
@@ -30,24 +30,25 @@
                 <v-container fluid>
                     <v-row>
                         <v-col md="12">
-                            <v-text-field label="Место" variant="outlined" hide-details="auto" density="comfortable"
-                                required :rules="[rules.required]"></v-text-field>
+                            <v-text-field v-model="customName" label="Место" variant="outlined" hide-details="auto"
+                                density="comfortable" required :rules="[rules.required]"></v-text-field>
                         </v-col>
                         <v-col md="12">
-                            <v-text-field label="Широта" variant="outlined" hide-details="auto" density="comfortable"
-                                required :rules="[rules.required,rules.isfloat]"></v-text-field>
+                            <v-text-field v-model="customLat" label="Широта (45.05)" variant="outlined"
+                                hide-details="auto" density="comfortable" required
+                                :rules="[rules.required, rules.isfloat]"></v-text-field>
                         </v-col>
                         <v-col md="12">
-                            <v-text-field label="Долгота" variant="outlined" hide-details="auto" density="comfortable"
-                                required :rules="[rules.required,rules.isfloat]"></v-text-field>
+                            <v-text-field v-model="customLon" label="Долгота (41.95)" variant="outlined"
+                                hide-details="auto" density="comfortable" required
+                                :rules="[rules.required, rules.isfloat]"></v-text-field>
                         </v-col>
 
                     </v-row>
 
                     <div class="d-flex mt-4">
 
-                        <v-btn icon type="submit" class=""
-                            color="primary"><v-icon>mdi-chart-bar-stacked</v-icon></v-btn>
+                        <v-btn icon type="submit" class="" color="primary"><v-icon>mdi-plus</v-icon></v-btn>
                         <!-- <v-spacer></v-spacer>
                     <v-btn icon @click="addLocation"> <v-icon>mdi-plus</v-icon></v-btn> -->
 
@@ -148,87 +149,102 @@ export default {
                 },
 
             },
+            customName: '',
+            customLat: '',
+            customLon: '',
         };
     },
-            mounted() {
-            this.fetchLocations();
+    mounted() {
+        this.fetchLocations();
+    },
+    computed: {
+        period() {
+            if (this.weatherData.length > 0 && this.weatherData[0].properties.timeseries.length > 20) {
+                const data = this.weatherData[0].properties.timeseries;
+                const fistTime = this.formatDate(data[0].time);
+                const lastTime = this.formatDate(data[data.length - 1].time);
+                return `${fistTime} - ${lastTime}`;
+            }
+            return '';
         },
-        computed: {
-            period() {
-                if (this.weatherData.length > 0 && this.weatherData[0].properties.timeseries.length > 20) {
-                    const data = this.weatherData[0].properties.timeseries;
-                    const fistTime = this.formatDate(data[0].time);
-                    const lastTime = this.formatDate(data[data.length - 1].time);
-                    return `${fistTime} - ${lastTime}`;
+
+    },
+    methods: {
+
+        getCustomWeather() {
+            const custom = {
+                "title": this.customName,
+                "value": {
+                    "label": this.customName,
+                    "heigth": "0",
+                    "lat": this.customLat,
+                    "lon": this.customLon,
                 }
-                return '';
-            },
+            };
 
+            this.locations.push(custom);
+            this.customName = '';
+            this.customLat = '';
+            this.customLon = '';
         },
-        methods: {
-
-            getCustomWeather() {
-
-            },
         async fetchLocations() {
-                try {
-                    const response = await fetch('/locations.json');
-                    this.locations = await response.json();
-                    this.selectedLocations[0] = this.locations[0].value;
-                    this.getWeather();
-                } catch (error) {
-                    console.error('Ошибка при загрузке данных:', error);
-                }
-            },
-            formatDate(dateString) {
-                return format(parseISO(dateString), "dd MMMM HH:mm", { locale: ru });
-            },
-            addLocation() {
-                this.selectedLocations.push('');
-            },
-            getWindDirection(degrees) {
-                if (degrees >= 337.5 || degrees < 22.5) return 'С';
-                if (degrees >= 22.5 && degrees < 67.5) return 'СВ';
-                if (degrees >= 67.5 && degrees < 112.5) return 'В';
-                if (degrees >= 112.5 && degrees < 157.5) return 'ЮВ';
-                if (degrees >= 157.5 && degrees < 202.5) return 'Ю';
-                if (degrees >= 202.5 && degrees < 247.5) return 'ЮЗ';
-                if (degrees >= 247.5 && degrees < 292.5) return 'З';
-                if (degrees >= 292.5 && degrees < 337.5) return 'СЗ';
-            },
+            try {
+                const response = await fetch('/locations.json');
+                this.locations = await response.json();
+                this.selectedLocations[0] = this.locations[0].value;
+                this.getWeather();
+            } catch (error) {
+                console.error('Ошибка при загрузке данных:', error);
+            }
+        },
+        formatDate(dateString) {
+            return format(parseISO(dateString), "dd MMMM HH:mm", { locale: ru });
+        },
+        addLocation() {
+            this.selectedLocations.push('');
+        },
+        getWindDirection(degrees) {
+            if (degrees >= 337.5 || degrees < 22.5) return 'С';
+            if (degrees >= 22.5 && degrees < 67.5) return 'СВ';
+            if (degrees >= 67.5 && degrees < 112.5) return 'В';
+            if (degrees >= 112.5 && degrees < 157.5) return 'ЮВ';
+            if (degrees >= 157.5 && degrees < 202.5) return 'Ю';
+            if (degrees >= 202.5 && degrees < 247.5) return 'ЮЗ';
+            if (degrees >= 247.5 && degrees < 292.5) return 'З';
+            if (degrees >= 292.5 && degrees < 337.5) return 'СЗ';
+        },
         async getWeather() {
 
-                this.weatherData = [];
-                try {
-                    // this.selectedLocations.forEach(location => {
+            this.weatherData = [];
+            try {
 
-                    for (const index in this.selectedLocations) {
-                        const location = this.selectedLocations[index];
+                for (const index in this.selectedLocations) {
+                    const location = this.selectedLocations[index];
 
-                        if (location && location.lat && location.lon) {
+                    if (location && location.lat && location.lon) {
 
-                            try {
-                                const response = await axios.get(`https://api.met.no/weatherapi/locationforecast/2.0/compact`, {
-                                    params: {
-                                        lat: location.lat,
-                                        lon: location.lon,
-                                    },
-                                });
-                                this.weatherData.push(response.data);
-                            } catch (error) {
-                                console.error(`Error fetching weather data for location at index ${index}:`, error);
-                            }
-                        } else {
-                            console.warn(`Location at index ${index} is invalid. Lat: ${location ? location.lat : 'undefined'}, Lon: ${location ? location.lon : 'undefined'}`);
+                        try {
+                            const response = await axios.get(`https://api.met.no/weatherapi/locationforecast/2.0/compact`, {
+                                params: {
+                                    lat: location.lat,
+                                    lon: location.lon,
+                                },
+                            });
+                            this.weatherData.push(response.data);
+                        } catch (error) {
+                            console.error(`Error fetching weather data for location at index ${index}:`, error);
                         }
-                    };
-                } catch (error) {
-                    console.error('Ошибка получения данных о погоде:', error);
-                    alert('Не удалось получить данные о погоде. Проверьте координаты.');
-                }
-            },
+                    } else {
+                        console.warn(`Location at index ${index} is invalid. Lat: ${location ? location.lat : 'undefined'}, Lon: ${location ? location.lon : 'undefined'}`);
+                    }
+                };
+            } catch (error) {
+                console.error('Ошибка получения данных о погоде:', error);
+                alert('Не удалось получить данные о погоде. Проверьте координаты.');
+            }
         },
-    };
+    },
+};
 </script>
 
 <style scoped>
