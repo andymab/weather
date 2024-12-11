@@ -55,7 +55,7 @@
             tabList() {
                 if (this.weatherData) {
                     return [
-                        { caption: 'Температура (°C)', series: this.seriesTemperature, type: 'spline' },
+                        { caption: 'Температура (°C)', series: this.seriesTemperature, type: 'column' },
                         { caption: 'Ветер (м/с)', series: this.seriesWindSpeed, type: 'spline' },
                         { caption: 'Давление (мм рт. ст.)', series: this.seriesPressure, type: 'spline' },
                         { caption: 'Влажность (%)', series: this.seriesHumidity, type: 'spline' },
