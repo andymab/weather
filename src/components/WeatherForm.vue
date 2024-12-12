@@ -67,10 +67,10 @@
 
 
             </v-toolbar>
+            <map-component />
 
             <div v-if="weatherData.length && weatherData[0].properties.timeseries.length > 20">
                 <WeatherChart :weatherData="weatherData" :selectedLocations="selectedLocations" />
-
 
                 <v-row>
                     <v-col md="2" v-for="(item, index) in weatherData[0].properties.timeseries" :key="`card-${index}`">
@@ -122,14 +122,16 @@
 import axios from 'axios';
 import WeatherChart from './WeatherChart.vue';
 import WeatherDataTable from './WeatherDataTable.vue';
+import MapComponent from './MapComponent.vue';
 
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
+
 export default {
     name: 'WeatherForm',
     components: {
-        WeatherDataTable, WeatherChart,
+        WeatherDataTable, WeatherChart, MapComponent,
     },
     data() {
         return {

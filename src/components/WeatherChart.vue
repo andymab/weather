@@ -70,6 +70,14 @@
 
         },
         methods: {
+            formatHpa(hPa){
+                const height = this.selectedLocations[0].heigth;
+                const barometricStep = 8;
+                const pressureChange = height / barometricStep;
+                const pressure =((hPa - pressureChange) * 0.75006375541921).toFixed(2);
+
+                return pressure;
+            },
             formatDate(dateString) {
                 return format(parseISO(dateString), "dd.MM HH:mm", { locale: ru }); // "dd MMMM yyyy HH:mm"
             },
@@ -127,7 +135,7 @@
                     const seriesWindSpeed = [];
                         data.properties.timeseries.forEach(item => {
                             seriesTemperature.push(item.data.instant.details.air_temperature);
-                            seriesPressure.push(item.data.instant.details.air_pressure_at_sea_level);
+                            seriesPressure.push(parseFloat(this.formatHpa(item.data.instant.details.air_pressure_at_sea_level)));
                             seriesHumidity.push(item.data.instant.details.relative_humidity);
                             seriesWindSpeed.push(item.data.instant.details.wind_speed);
                         });
