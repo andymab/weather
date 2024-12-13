@@ -14,8 +14,21 @@
 
             <v-card>
                 <v-card-title>
-                    <div class="d-flex align-center">
-                        <span class="mr-4">Выберите точку на карте для которой хотите получить погоду или постройте маршрут</span>
+                    <div v-if="$vuetify.display.xs">
+                        <div class="d-flex" >
+                        <div class="d-flex flex-column">
+                            <span class="text-wrap">Точку на карте или маршрут</span>
+
+                            <v-checkbox-btn v-model="tracks" :label="`Построить маршрут`"></v-checkbox-btn>
+                        </div>
+                            <v-spacer></v-spacer>
+                            <v-btn icon flat @click="dialog = false"><v-icon>mdi-close</v-icon></v-btn>
+                        </div>
+                    </div>
+                    <div class="d-flex align-center" v-else>
+                        <span class="text-wrap">Выберите точку на карте для которой хотите получить погоду или постройте
+                            маршрут</span>
+
                         <v-checkbox-btn v-model="tracks" :label="`Построить маршрут`"></v-checkbox-btn>
                         <v-spacer></v-spacer>
                         <v-btn icon flat @click="dialog = false"><v-icon>mdi-close</v-icon></v-btn>
