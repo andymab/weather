@@ -14,25 +14,34 @@
                         </v-col>
                     </v-row>
                     <div class="d-flex mt-4">
-
-                        <v-btn icon type="submit" class=""
-                            color="primary"><v-icon>mdi-chart-bar-stacked</v-icon></v-btn>
+                        <v-tooltip text="Tooltip">
+                            <template v-slot:activator="{ props }">
+                                <v-btn icon type="submit" v-bind="props"
+                                    color="primary"><v-icon>mdi-chart-bar-stacked</v-icon></v-btn>
+                            </template>
+                            Получить погоду
+                        </v-tooltip>
                         <v-spacer></v-spacer>
-                        <DialogForMap @updateCoords="updateCoords" :coords="getFirstCoords" :layer="mapslayer"/>
+                        <DialogForMap @updateCoords="updateCoords" :coords="getFirstCoords" :layer="mapslayer" />
                         <v-spacer></v-spacer>
-                        <v-btn icon @click="addLocation"> <v-icon>mdi-plus</v-icon></v-btn>
+                        <v-tooltip text="Добавить к сравнению">
+                            <template v-slot:activator="{ props }">
+                                <v-btn icon @click="addLocation" v-bind="props"
+                                    ><v-icon>mdi-plus</v-icon></v-btn>
+                            </template>
+                        </v-tooltip>
 
                     </div>
                     <v-radio-group density="comfortable" class="mt-2" v-model="mapslayer">
                         <v-radio label="Openstreetmap" value="openstreetmap"></v-radio>
                         <v-radio label="Opentopomap" value="opentopomap"></v-radio>
-                      </v-radio-group>
+                    </v-radio-group>
 
 
                 </v-container>
             </v-form>
 
-            <v-form ref="custom-form" @submit.prevent="getCustomWeather" width="100%">
+            <v-form ref="customForm" @submit.prevent="getCustomWeather" width="100%">
 
                 <v-container fluid>
                     <v-row>
@@ -54,17 +63,20 @@
                     </v-row>
 
                     <div class="d-flex mt-4">
-
-                        <v-btn icon type="submit" class="" color="primary"><v-icon>mdi-plus</v-icon></v-btn>
-                        <!-- <v-spacer></v-spacer>
-                    <v-btn icon @click="addLocation"> <v-icon>mdi-plus</v-icon></v-btn> -->
-
+                        <v-tooltip text="Tooltip">
+                            <template v-slot:activator="{ props }">
+                                <v-btn icon type="submit" v-bind="props" color="primary"><v-icon>mdi-plus</v-icon>
+                                </v-btn>
+                            </template>
+                            Добавить место в список
+                        </v-tooltip>
                     </div>
                 </v-container>
             </v-form>
         </v-navigation-drawer>
 
         <v-container fluid class="pt-0">
+            <Notification ref="notification" />
             <v-toolbar app>
                 <v-btn icon @click="drawer = !drawer">
                     <v-icon>{{ !drawer ? 'mdi-chevron-right' : 'mdi-chevron-left' }}</v-icon>
@@ -126,146 +138,158 @@
 </template>
 
 <script>
-    import axios from 'axios';
-    import WeatherChart from './WeatherChart.vue';
-    import WeatherDataTable from './WeatherDataTable.vue';
+import axios from 'axios';
+import WeatherChart from './WeatherChart.vue';
+import WeatherDataTable from './WeatherDataTable.vue';
+import Notification from './Notification.vue';
+import DialogForMap from './DialogForMap.vue';
 
-    import DialogForMap from './DialogForMap.vue';
 
-    import { format, parseISO } from 'date-fns';
-    import { ru } from 'date-fns/locale';
 
-    export default {
-        name: 'WeatherForm',
-        components: {
-            WeatherDataTable, WeatherChart, DialogForMap
-        },
-        data() {
-            return {
-                mapslayer:'openstreetmap',
-                drawer: false,
-                selectedLocations: [''],
-                locations: [],
-                weatherData: [],
-                rules: {
-                    required: value => !!value || 'Required.',
-                    isfloat: value => {
-                        return /^\d{2}\.\d{1,3}$/.test(value) || 'Должны быть цифры и точка. ##.###';
-                    },
-                    counter: value => value.length <= 20 || 'Max 20 characters',
-                    email: value => {
-                        const pattern = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-                        return pattern.test(value) || 'Invalid e-mail.'
-                    },
+import { format, parseISO } from 'date-fns';
+import { ru } from 'date-fns/locale';
 
+export default {
+    name: 'WeatherForm',
+    components: {
+        WeatherDataTable, WeatherChart, DialogForMap, Notification,
+    },
+    data() {
+        return {
+            mapslayer: 'openstreetmap',
+            drawer: false,
+            selectedLocations: [''],
+            locations: [],
+            weatherData: [],
+            rules: {
+                required: value => !!value || 'Поле должно быть заплнено',
+                isfloat: value => {
+                    return /^\d{2}\.\d{1,3}$/.test(value) || 'Должны быть цифры и точка. ##.###';
                 },
-                customName: '',
-                customLat: '',
-                customLon: '',
-            };
-        },
-        mounted() {
-            this.fetchLocations();
-        },
-        computed: {
-            getFirstCoords() {
-                if (this.selectedLocations[0]) {
-                    return [this.selectedLocations[0].lat, this.selectedLocations[0].lon];
-                }
-                return [];
-            },
-            period() {
-                if (this.weatherData.length > 0 && this.weatherData[0].properties.timeseries.length > 20) {
-                    const data = this.weatherData[0].properties.timeseries;
-                    const fistTime = this.formatDate(data[0].time);
-                    const lastTime = this.formatDate(data[data.length - 1].time);
-                    return `${fistTime} - ${lastTime}`;
-                }
-                return '';
-            },
+                counter: value => value.length <= 20 || 'Max 20 characters',
+                email: value => {
+                    const pattern = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+                    return pattern.test(value) || 'Invalid e-mail.'
+                },
 
-        },
-        methods: {
-            updateCoords(coords) {
-                this.customLat = coords.lat;
-                this.customLon = coords.lon;
             },
-            getCustomWeather() {
-                const custom = {
-                    "title": this.customName,
-                    "value": {
-                        "label": this.customName,
-                        "heigth": "0",
-                        "lat": this.customLat,
-                        "lon": this.customLon,
+            customName: '',
+            customLat: '',
+            customLon: '',
+        };
+    },
+    mounted() {
+        this.fetchLocations();
+    },
+    computed: {
+        getFirstCoords() {
+            if (this.selectedLocations[0]) {
+                return [this.selectedLocations[0].lat, this.selectedLocations[0].lon];
+            }
+            return [];
+        },
+        period() {
+            if (this.weatherData.length > 0 && this.weatherData[0].properties.timeseries.length > 20) {
+                const data = this.weatherData[0].properties.timeseries;
+                const fistTime = this.formatDate(data[0].time);
+                const lastTime = this.formatDate(data[data.length - 1].time);
+                return `${fistTime} - ${lastTime}`;
+            }
+            return '';
+        },
+
+    },
+    methods: {
+        addNotification(message, succes) {
+            this.$refs.notification.notify(message, 'success');
+        },
+        updateCoords(coords) {
+            this.customLat = coords.lat;
+            this.customLon = coords.lon;
+        },
+        async getCustomWeather() {
+            const { valid } = await this.$refs.customForm.validate();
+            if (!valid) {
+                return;
+            }
+            const custom = {
+                "title": this.customName,
+                "value": {
+                    "label": this.customName,
+                    "height": "0",
+                    "lat": this.customLat,
+                    "lon": this.customLon,
+                }
+            };
+
+            this.locations.push(custom);
+            this.customName = '';
+            this.customLat = '';
+            this.customLon = '';
+
+            // Вывод сообщения об успешном добавлении (опционально)
+            this.addNotification('Локация успешно добавлена!', 'success');
+        },
+        async fetchLocations() {
+            try {
+                const response = await fetch('/locations.json');
+                this.locations = await response.json();
+                this.selectedLocations[0] = this.locations[0].value;
+                this.getWeather();
+            } catch (error) {
+                console.error('Ошибка при загрузке данных:', error);
+            }
+        },
+        formatDate(dateString) {
+            return format(parseISO(dateString), "dd MMMM HH:mm", { locale: ru });
+        },
+        addLocation() {
+            this.selectedLocations.push('');
+        },
+        getWindDirection(degrees) {
+            if (degrees >= 337.5 || degrees < 22.5) return 'С';
+            if (degrees >= 22.5 && degrees < 67.5) return 'СВ';
+            if (degrees >= 67.5 && degrees < 112.5) return 'В';
+            if (degrees >= 112.5 && degrees < 157.5) return 'ЮВ';
+            if (degrees >= 157.5 && degrees < 202.5) return 'Ю';
+            if (degrees >= 202.5 && degrees < 247.5) return 'ЮЗ';
+            if (degrees >= 247.5 && degrees < 292.5) return 'З';
+            if (degrees >= 292.5 && degrees < 337.5) return 'СЗ';
+        },
+        async getWeather() {
+
+            this.weatherData = [];
+            try {
+
+                for (const index in this.selectedLocations) {
+                    const location = this.selectedLocations[index];
+
+                    if (location && location.lat && location.lon) {
+
+                        try {
+                            const response = await axios.get(`https://api.met.no/weatherapi/locationforecast/2.0/compact`, {
+                                params: {
+                                    lat: location.lat,
+                                    lon: location.lon,
+                                },
+                            });
+                            this.weatherData.push(response.data);
+                        } catch (error) {
+                            console.error(`Error fetching weather data for location at index ${index}:`, error);
+                        }
+                    } else {
+                        console.warn(`Location at index ${index} is invalid. Lat: ${location ? location.lat : 'undefined'}, Lon: ${location ? location.lon : 'undefined'}`);
                     }
                 };
-
-                this.locations.push(custom);
-                this.customName = '';
-                this.customLat = '';
-                this.customLon = '';
-            },
-            async fetchLocations() {
-                try {
-                    const response = await fetch('/locations.json');
-                    this.locations = await response.json();
-                    this.selectedLocations[0] = this.locations[0].value;
-                    this.getWeather();
-                } catch (error) {
-                    console.error('Ошибка при загрузке данных:', error);
-                }
-            },
-            formatDate(dateString) {
-                return format(parseISO(dateString), "dd MMMM HH:mm", { locale: ru });
-            },
-            addLocation() {
-                this.selectedLocations.push('');
-            },
-            getWindDirection(degrees) {
-                if (degrees >= 337.5 || degrees < 22.5) return 'С';
-                if (degrees >= 22.5 && degrees < 67.5) return 'СВ';
-                if (degrees >= 67.5 && degrees < 112.5) return 'В';
-                if (degrees >= 112.5 && degrees < 157.5) return 'ЮВ';
-                if (degrees >= 157.5 && degrees < 202.5) return 'Ю';
-                if (degrees >= 202.5 && degrees < 247.5) return 'ЮЗ';
-                if (degrees >= 247.5 && degrees < 292.5) return 'З';
-                if (degrees >= 292.5 && degrees < 337.5) return 'СЗ';
-            },
-            async getWeather() {
-
-                this.weatherData = [];
-                try {
-
-                    for (const index in this.selectedLocations) {
-                        const location = this.selectedLocations[index];
-
-                        if (location && location.lat && location.lon) {
-
-                            try {
-                                const response = await axios.get(`https://api.met.no/weatherapi/locationforecast/2.0/compact`, {
-                                    params: {
-                                        lat: location.lat,
-                                        lon: location.lon,
-                                    },
-                                });
-                                this.weatherData.push(response.data);
-                            } catch (error) {
-                                console.error(`Error fetching weather data for location at index ${index}:`, error);
-                            }
-                        } else {
-                            console.warn(`Location at index ${index} is invalid. Lat: ${location ? location.lat : 'undefined'}, Lon: ${location ? location.lon : 'undefined'}`);
-                        }
-                    };
-                } catch (error) {
-                    console.error('Ошибка получения данных о погоде:', error);
-                    alert('Не удалось получить данные о погоде. Проверьте координаты.');
-                }
-            },
+            } catch (error) {
+                console.error('Ошибка получения данных о погоде:', error);
+                alert('Не удалось получить данные о погоде. Проверьте координаты.');
+            }
         },
-    };
+    },
+};
 </script>
 
 <style scoped>
-    /* Добавьте стили по необходимости */
+/* Добавьте стили по необходимости */
 </style>

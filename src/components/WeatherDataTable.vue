@@ -74,7 +74,7 @@
                 return format(parseISO(dateString), "dd MMMM yyyy HH:mm", { locale: ru });
             },
             formatHpa(hPa) {
-                const height = this.selectedLocations[0].heigth;
+                const height = this.selectedLocations[0].height;
                 const barometricStep = 8;
                 const pressureChange = height / barometricStep;
                 return ((hPa - pressureChange) * 0.75006375541921).toFixed(2);
