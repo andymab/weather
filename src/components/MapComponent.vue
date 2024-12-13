@@ -140,7 +140,7 @@ export default {
     </trk>
 </gpx>`;
             const blob = new Blob([gpxData], { type: "application/gpx+xml" });
-            saveAs(blob, "route.gpx");
+            saveAs(blob, `${this.trackName}.gpx`);
         },
         loadRoute() {
             const input = document.createElement('input');
