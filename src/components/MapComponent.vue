@@ -2,12 +2,13 @@ vue
 <template>
     <div>
         <div ref="mapContainer" class="dialogformap"></div>
-        <div class="d-flex">
-            <div v-if="tracks">
-                <button @click="saveRoute" class="mr-4">Сохранить маршрут</button>
-                <button @click="removeLastPoint" class="mr-4">Удалить последнюю точку</button>
+        <div :class="'d-flex'+ ($vuetify.display.xs ? 'flex-column pb-4' : '')">
+            <v-btn flat class="mr-2" @click="loadRoute">Загрузить маршрут из GPX</v-btn>
+            <div v-if="markers.length > 2 " :class="`d-flex `+ ($vuetify.display.xs ? 'flex-column' : '')">
+                <v-btn flat  @click="saveRoute" class="mr-2">Сохранить маршрут</v-btn>
+                <v-text-field v-model="trackName" label="Название маршрута" class="mr-2" variant="outlined"  hide-details="auto" density="compact" width="200"></v-text-field>
+                <v-btn flat @click="removeLastPoint" class="mr-2">Удалить последнюю точку</v-btn>
             </div>
-            <v-btn flat @click="loadRoute">Загрузить маршрут из GPX</v-btn>
             <v-checkbox-btn v-model="joinTracks" :label="`Объединять`"></v-checkbox-btn>
         </div>
         <v-progress-circular v-if="loading" indeterminate color="primary" class="loading-spinner"></v-progress-circular>
@@ -18,7 +19,7 @@ vue
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { saveAs } from 'file-saver';
-import { marker } from 'leaflet';
+// import { marker } from 'leaflet';
 
 export default {
     name: 'MapComponent',
@@ -38,6 +39,7 @@ export default {
     },
     data() {
         return {
+            trackName:'',
             map: null,
             markers: [], // Массив для хранения ссылок на маркеры
             joinTracks: false,
@@ -127,7 +129,7 @@ export default {
             let gpxData = `<?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1" creator="Leaflet GPX Export">
     <trk>
-        <name>My Route</name>
+        <name>${this.trackName}</name>
         <trkseg>`;
             this.route.forEach(coord => {
                 gpxData += `
@@ -160,6 +162,7 @@ export default {
             this.loading = true;
             const parser = new DOMParser();
             const xmlDoc = parser.parseFromString(gpxData, "application/xml");
+            this.trackName= xmlDoc.getElementsByTagName("name")[0].textContent;
             const trackPoints = xmlDoc.getElementsByTagName("trkpt");
             this.route = [];
             if (this.polyline && !this.joinTracks) {
@@ -195,21 +198,14 @@ export default {
             }
         },
     },
-    // watch: {
-    //     coords(newCoords) {
-    //         if (this.map) {
-    //             this.map.setView(newCoords, 17);
-    //             if (this.marker) {
-    //                 this.marker.setLatLng(newCoords);
-    //                 this.marker.bindPopup(`Координаты: ${newCoords[0]}, ${newCoords[1]}`).openPopup();
-    //             } else {
-    //                 this.marker = L.marker(newCoords, this.markerOptions).addTo(this.map)
-    //                     .bindPopup(`Координаты: ${newCoords[0]}, ${newCoords[1]}`)
-    //                     .openPopup();
-    //             }
-    //         }
-    //     },
-    // },
+    watch: {
+        coords(newCoords) {
+            if (this.map) {
+                this.map.setView(newCoords, 17);
+                L.marker(newCoords, this.markerOptions).addTo(this.map).bindPopup(`Координаты: ${newCoords[0]}, ${newCoords[1]}`).openPopup();
+            }
+        },
+    },
 };
 </script>
 

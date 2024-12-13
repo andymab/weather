@@ -45,16 +45,16 @@
 
                 <v-container fluid>
                     <v-row>
-                        <v-col md="12">
+                        <v-col cols="12"  xs="12" >
                             <v-text-field v-model="customName" label="Место" variant="outlined" hide-details="auto"
                                 density="comfortable" required :rules="[rules.required]"></v-text-field>
                         </v-col>
-                        <v-col md="12">
+                        <v-col  cols="12"  xs="12">
                             <v-text-field v-model="customLat" label="Широта (45.05)" variant="outlined"
                                 hide-details="auto" density="comfortable" required
                                 :rules="[rules.required, rules.isfloat]"></v-text-field>
                         </v-col>
-                        <v-col md="12">
+                        <v-col  cols="12"  xs="12">
                             <v-text-field v-model="customLon" label="Долгота (41.95)" variant="outlined"
                                 hide-details="auto" density="comfortable" required
                                 :rules="[rules.required, rules.isfloat]"></v-text-field>
