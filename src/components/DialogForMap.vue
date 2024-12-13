@@ -19,7 +19,7 @@
                         <div class="d-flex flex-column">
                             <span class="text-wrap">Точку на карте или маршрут</span>
 
-                            <v-checkbox-btn v-model="tracks" :label="`Построить маршрут`"></v-checkbox-btn>
+                            <v-checkbox-btn v-model="tracks" :label="`Маршрут`"></v-checkbox-btn>
                         </div>
                             <v-spacer></v-spacer>
                             <v-btn icon flat @click="dialog = false"><v-icon>mdi-close</v-icon></v-btn>
@@ -29,7 +29,7 @@
                         <span class="text-wrap">Выберите точку на карте для которой хотите получить погоду или постройте
                             маршрут</span>
 
-                        <v-checkbox-btn v-model="tracks" :label="`Построить маршрут`"></v-checkbox-btn>
+                        <v-checkbox-btn v-model="tracks" :label="`Маршрут`"></v-checkbox-btn>
                         <v-spacer></v-spacer>
                         <v-btn icon flat @click="dialog = false"><v-icon>mdi-close</v-icon></v-btn>
                     </div>

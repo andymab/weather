@@ -7,7 +7,8 @@ vue
                 <button @click="saveRoute" class="mr-4">Сохранить маршрут</button>
                 <button @click="removeLastPoint" class="mr-4">Удалить последнюю точку</button>
             </div>
-            <button @click="loadRoute">Загрузить маршрут из GPX</button>
+            <v-btn flat @click="loadRoute">Загрузить маршрут из GPX</v-btn>
+            <v-checkbox-btn v-model="joinTracks" :label="`Объединять`"></v-checkbox-btn>
         </div>
         <v-progress-circular v-if="loading" indeterminate color="primary" class="loading-spinner"></v-progress-circular>
     </div>
@@ -17,8 +18,10 @@ vue
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { saveAs } from 'file-saver';
+import { marker } from 'leaflet';
 
 export default {
+    name: 'MapComponent',
     props: {
         coords: {
             type: Array,
@@ -36,14 +39,15 @@ export default {
     data() {
         return {
             map: null,
-            marker: null,
-            marketOptions: {
-                radius: 4,
-                fillColor: "#ff7800",
-                color: "#000",
-                weight: 1,
-                opacity: 1,
-                fillOpacity: 0.8,
+            markers: [], // Массив для хранения ссылок на маркеры
+            joinTracks: false,
+            markerOptions: {
+                draggable: true,
+                icon: L.divIcon({
+                    className: 'custom-marker',
+                    html: `<div style="background-color: #ff7800; border-radius: 50%; width: 10px; height: 10px;"></div>`,
+                    iconSize: [10, 10]
+                })
             },
             route: [],
             polyline: null,
@@ -52,40 +56,68 @@ export default {
     },
     mounted() {
         this.initializeMap();
+
     },
     methods: {
         initializeMap() {
             this.map = L.map(this.$refs.mapContainer).setView(this.coords, 15);
+            this.map.on('zoomend', () => {
+                this.updateMarkers(); // Обновляем маркеры при изменении масштаба
+            });
+
             L.tileLayer(`https://{s}.tile.${this.layer}.org/{z}/{x}/{y}.png`, {
                 maxZoom: 17,
                 attribution: `&copy; <a href="https://${this.layer}.org/copyright">OpenTopoMap</a> contributors`,
             }).addTo(this.map);
 
-            this.marker = L.circleMarker(this.coords, this.marketOptions).addTo(this.map).bindPopup(`Координаты: ${this.coords[0]}, ${this.coords[1]}`).openPopup();
+            L.marker(this.coords, this.markerOptions).addTo(this.map).bindPopup(`Координаты: ${this.coords[0]}, ${this.coords[1]}`).openPopup();
 
             this.map.on('click', (e) => {
-                const { lat, lng } = e.latlng;
-                if (!this.tracks) {
+                    const { lat, lng } = e.latlng;
+                if (!this.tracks && this.markers.length === 0) {
                     this.$emit('updateCoords', { lat: lat.toFixed(3), lon: lng.toFixed(3) });
                 } else {
-                    this.route.push([lat, lng]);
+                 this.addMarker(lat, lng);
+                 this.redrawRoute(); // Перерисовываем линию
                 }
-                this.addMarker(lat, lng);
-                this.drawRoute(lat, lng);
             });
         },
         addMarker(lat, lng) {
-            L.circleMarker([lat, lng], this.marketOptions).addTo(this.map);
+            const marker = L.marker([lat, lng], this.markerOptions).addTo(this.map);
+            this.markers.push(marker);
+
+            marker.on('dragend', (event) => {
+                // const marker = event.target;
+                const position = marker.getLatLng();
+
+                // Обновляем координаты в вашем массиве маршрута
+                const index = this.route.findIndex(coord => coord[0] === lat && coord[1] === lng);
+                if (index !== -1) {
+                    this.route[index] = [position.lat, position.lng]; // Обновляем координаты
+                }
+                // Перерисовываем линию
+                this.redrawRoute();
+            });
+            // Добавляем координаты в маршрут
+            this.route.push([lat, lng]);
         },
-        drawRoute(lat, lng) {
+        redrawRoute() {
+            // Удаляем старую полилинию, если она существует
             if (this.polyline) {
-                this.polyline.addLatLng([lat, lng]);
-            } else {
-                this.polyline = L.polyline(this.route, { color: 'blue' }).addTo(this.map);
+                this.map.removeLayer(this.polyline);
             }
-            if (this.route.length > 1) {
-                L.polyline(this.route, { color: 'blue' }).addTo(this.map);
-            }
+            // Создаем новую полилинию с обновленными координатами
+            this.polyline = L.polyline(this.route, { color: 'blue' }).addTo(this.map);
+            // Обновляем маркеры, если нужно
+
+        },
+        updateMarkers() {
+            // Обновляем позиции маркеров
+            this.markers.forEach((marker, index) => {
+                if (this.route[index]) {
+                    marker.setLatLng(this.route[index]); // Устанавливаем новую позицию маркера
+                }
+            });
         },
         saveRoute() {
             if (this.route.length === 0) {
@@ -130,17 +162,16 @@ export default {
             const xmlDoc = parser.parseFromString(gpxData, "application/xml");
             const trackPoints = xmlDoc.getElementsByTagName("trkpt");
             this.route = [];
-            if (this.polyline) {
+            if (this.polyline && !this.joinTracks) {
                 this.map.removeLayer(this.polyline);
                 this.polyline = null;
             }
             for (let i = 0; i < trackPoints.length; i++) {
                 const lat = parseFloat(trackPoints[i].getAttribute("lat"));
                 const lon = parseFloat(trackPoints[i].getAttribute("lon"));
-                this.route.push([lat, lon]);
                 this.addMarker(lat, lon);
             }
-            this.polyline = L.polyline(this.route, { color: 'blue' }).addTo(this.map);
+            this.redrawRoute();
             // Обновляем позиционирование карты
             if (this.route.length > 0) {
                 const bounds = L.latLngBounds(this.route.map(coord => L.latLng(coord[0], coord[1])));
@@ -164,21 +195,21 @@ export default {
             }
         },
     },
-    watch: {
-        coords(newCoords) {
-            if (this.map) {
-                this.map.setView(newCoords, 17);
-                if (this.marker) {
-                    this.marker.setLatLng(newCoords);
-                    this.marker.bindPopup(`Координаты: ${newCoords[0]}, ${newCoords[1]}`).openPopup();
-                } else {
-                    this.marker = L.marker(newCoords).addTo(this.map)
-                        .bindPopup(`Координаты: ${newCoords[0]}, ${newCoords[1]}`)
-                        .openPopup();
-                }
-            }
-        },
-    },
+    // watch: {
+    //     coords(newCoords) {
+    //         if (this.map) {
+    //             this.map.setView(newCoords, 17);
+    //             if (this.marker) {
+    //                 this.marker.setLatLng(newCoords);
+    //                 this.marker.bindPopup(`Координаты: ${newCoords[0]}, ${newCoords[1]}`).openPopup();
+    //             } else {
+    //                 this.marker = L.marker(newCoords, this.markerOptions).addTo(this.map)
+    //                     .bindPopup(`Координаты: ${newCoords[0]}, ${newCoords[1]}`)
+    //                     .openPopup();
+    //             }
+    //         }
+    //     },
+    // },
 };
 </script>
 
@@ -186,6 +217,7 @@ export default {
 .dialogformap {
     height: calc(100vh - 130px);
 }
+
 .loading-spinner {
     position: absolute;
     top: 50%;
