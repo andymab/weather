@@ -13,14 +13,14 @@
 
 
             <v-card>
-                <v-card-title>
+                <!-- <v-card-title> -->
+                    <v-card-text class="pt-0">
                     <div v-if="$vuetify.display.xs">
-                        <div class="d-flex" >
-                        <div class="d-flex flex-column">
-                            <span class="text-wrap">Точку на карте или маршрут</span>
-
-                            <v-checkbox-btn v-model="tracks" :label="`Маршрут`"></v-checkbox-btn>
-                        </div>
+                        <div class="d-flex align-center" >
+   
+                            <span class="text-wrap">Выберите точку</span>
+                         
+  
                             <v-spacer></v-spacer>
                             <v-btn icon flat @click="dialog = false"><v-icon>mdi-close</v-icon></v-btn>
                         </div>
@@ -28,16 +28,14 @@
                     <div class="d-flex align-center" v-else>
                         <span class="text-wrap">Выберите точку на карте для которой хотите получить погоду или постройте
                             маршрут</span>
-
-                        <v-checkbox-btn v-model="tracks" :label="`Маршрут`"></v-checkbox-btn>
                         <v-spacer></v-spacer>
                         <v-btn icon flat @click="dialog = false"><v-icon>mdi-close</v-icon></v-btn>
                     </div>
 
-                </v-card-title>
-                <v-card-text>
+                <!-- </v-card-title> -->
+                
 
-                    <MapComponent @updateCoords="updateCoords" :coords="getCoords" :layer="getlayer" :tracks="tracks" />
+                    <MapComponent @updateCoords="updateCoords" :coords="getCoords" :layer="getlayer"  />
                 </v-card-text>
 
 

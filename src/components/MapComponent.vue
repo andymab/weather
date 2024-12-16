@@ -1,16 +1,29 @@
 vue
 <template>
     <div>
-        <div ref="mapContainer" class="dialogformap"></div>
-        <div :class="'d-flex'+ ($vuetify.display.xs ? 'flex-column pb-4' : '')">
+        <v-toolbar flat>
+            <v-toolbar-title>Настройки маршрута</v-toolbar-title>
+     
+            <v-btn icon @click="togglePanel">
+                <v-icon>{{ panelVisible ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+            </v-btn>
+        </v-toolbar>
+
+        <div v-if="panelVisible" :class="'d-flex' + ($vuetify.display.xs ? 'flex-column pb-4' : '')">
+            <v-checkbox-btn v-model="tracks" :label="`Новый маршрут`"></v-checkbox-btn>
             <v-btn flat class="mr-2" @click="loadRoute">Загрузить маршрут из GPX</v-btn>
-            <div v-if="markers.length > 2 " :class="`d-flex `+ ($vuetify.display.xs ? 'flex-column' : '')">
-                <v-btn flat  @click="saveRoute" class="mr-2">Сохранить маршрут</v-btn>
-                <v-text-field v-model="trackName" label="Название маршрута" class="mr-2" variant="outlined"  hide-details="auto" density="compact" width="200"></v-text-field>
+            <div v-if="markers.length > 2" :class="`d-flex ` + ($vuetify.display.xs ? 'flex-column' : '')">
+                <v-btn flat @click="saveRoute" class="mr-2">Сохранить маршрут</v-btn>
+                <v-text-field v-model="trackName" label="Название маршрута" class="mr-2" variant="outlined"
+                    hide-details="auto" density="compact" width="200"></v-text-field>
                 <v-btn flat @click="removeLastPoint" class="mr-2">Удалить последнюю точку</v-btn>
             </div>
-            <v-checkbox-btn v-model="joinTracks" :label="`Объединять`"></v-checkbox-btn>
-        </div>
+            <v-checkbox-btn v-model="joinTracks" :label="`Объединять треки`"></v-checkbox-btn>
+            {{ calculateDistance }}
+        </div>        
+        <div ref="mapContainer" class="dialogformap"></div>
+
+
         <v-progress-circular v-if="loading" indeterminate color="primary" class="loading-spinner"></v-progress-circular>
     </div>
 </template>
@@ -32,14 +45,12 @@ export default {
             type: String,
             default: () => 'openstreetmap',
         },
-        tracks: {
-            type: Boolean,
-            default: () => false,
-        },
     },
     data() {
         return {
-            trackName:'',
+            tracks:false,
+            panelVisible: false,
+            trackName: '',
             map: null,
             markers: [], // Массив для хранения ссылок на маркеры
             joinTracks: false,
@@ -56,11 +67,25 @@ export default {
             loading: false,
         };
     },
+    computed:{
+        calculateDistance() {
+            let totalDistance = 0;
+            for (let i = 0; i < this.route.length - 1; i++) {
+                const pointA = L.latLng(this.route[i]);
+                const pointB = L.latLng(this.route[i + 1]);
+                totalDistance += pointA.distanceTo(pointB); // Расстояние в метрах
+            }
+            return `${totalDistance.toFixed(2)}м`; // Возвращает общее расстояние
+        },
+    },
     mounted() {
         this.initializeMap();
 
     },
     methods: {
+        togglePanel() {
+            this.panelVisible = !this.panelVisible; // Переключаем состояние видимости панели
+        },
         initializeMap() {
             this.map = L.map(this.$refs.mapContainer).setView(this.coords, 15);
             this.map.on('zoomend', () => {
@@ -75,12 +100,12 @@ export default {
             L.marker(this.coords, this.markerOptions).addTo(this.map).bindPopup(`Координаты: ${this.coords[0]}, ${this.coords[1]}`).openPopup();
 
             this.map.on('click', (e) => {
-                    const { lat, lng } = e.latlng;
+                const { lat, lng } = e.latlng;
                 if (!this.tracks && this.markers.length === 0) {
                     this.$emit('updateCoords', { lat: lat.toFixed(3), lon: lng.toFixed(3) });
                 } else {
-                 this.addMarker(lat, lng);
-                 this.redrawRoute(); // Перерисовываем линию
+                    this.addMarker(lat, lng);
+                    this.redrawRoute(); // Перерисовываем линию
                 }
             });
         },
@@ -162,7 +187,7 @@ export default {
             this.loading = true;
             const parser = new DOMParser();
             const xmlDoc = parser.parseFromString(gpxData, "application/xml");
-            this.trackName= xmlDoc.getElementsByTagName("name")[0].textContent;
+            this.trackName = xmlDoc.getElementsByTagName("name")[0].textContent;
             const trackPoints = xmlDoc.getElementsByTagName("trkpt");
             this.route = [];
             if (this.polyline && !this.joinTracks) {
@@ -209,9 +234,14 @@ export default {
 };
 </script>
 
+<style>
+.leaflet-bottom.leaflet-right{
+    opacity: 0;
+}
+</style>
 <style scoped>
 .dialogformap {
-    height: calc(100vh - 130px);
+    height: calc(100vh - 140px);
 }
 
 .loading-spinner {
@@ -220,4 +250,6 @@ export default {
     left: 50%;
     transform: translate(-50%, -50%);
 }
+
+
 </style>
