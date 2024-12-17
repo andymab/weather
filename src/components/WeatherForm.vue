@@ -32,12 +32,6 @@
                         </v-tooltip>
 
                     </div>
-                    <v-radio-group density="comfortable" class="mt-2" v-model="mapslayer">
-                        <v-radio label="Openstreetmap" value="openstreetmap"></v-radio>
-                        <v-radio label="Opentopomap" value="opentopomap"></v-radio>
-                    </v-radio-group>
-
-
                 </v-container>
             </v-form>
 

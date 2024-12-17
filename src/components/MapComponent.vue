@@ -2,25 +2,40 @@ vue
 <template>
     <div>
         <v-toolbar flat>
-            <v-toolbar-title>Настройки маршрута</v-toolbar-title>
-     
+            <v-toolbar-title>Настройки маршрута <span v-if="route.length > 1">{{ calculateDistance
+                    }}</span></v-toolbar-title>
+
             <v-btn icon @click="togglePanel">
                 <v-icon>{{ panelVisible ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
             </v-btn>
         </v-toolbar>
 
         <div v-if="panelVisible" :class="'d-flex' + ($vuetify.display.xs ? 'flex-column pb-4' : '')">
-            <v-checkbox-btn v-model="tracks" :label="`Новый маршрут`"></v-checkbox-btn>
-            <v-btn flat class="mr-2" @click="loadRoute">Загрузить маршрут из GPX</v-btn>
-            <div v-if="markers.length > 2" :class="`d-flex ` + ($vuetify.display.xs ? 'flex-column' : '')">
-                <v-btn flat @click="saveRoute" class="mr-2">Сохранить маршрут</v-btn>
-                <v-text-field v-model="trackName" label="Название маршрута" class="mr-2" variant="outlined"
-                    hide-details="auto" density="compact" width="200"></v-text-field>
-                <v-btn flat @click="removeLastPoint" class="mr-2">Удалить последнюю точку</v-btn>
-            </div>
-            <v-checkbox-btn v-model="joinTracks" :label="`Объединять треки`"></v-checkbox-btn>
-            {{ calculateDistance }}
-        </div>        
+            <v-col>
+                <p>Слои </p>
+                <v-radio-group density="comfortable" class="mt-2" v-model="mapslayer">
+                    <v-radio v-for="layer in mapsLayerPath" :label="layer.label" :value="layer"></v-radio>
+                </v-radio-group>
+            </v-col>
+            <v-col>
+                <v-checkbox-btn v-model="tracks" :label="`Новый маршрут`"></v-checkbox-btn>
+                <v-btn v-if="markers.length > 2" flat @click="removeLastPoint" class="mr-2">Удалить последнюю
+                    точку</v-btn>
+            </v-col>
+            <v-col>
+                <v-btn flat class="mr-2" @click="loadRoute">Загрузить маршрут из GPX</v-btn>
+                <div v-if="markers.length > 2" :class="`d-flex ` + ($vuetify.display.xs ? 'flex-column' : '')">
+                    <v-btn flat @click="saveRoute" class="mr-2">Сохранить маршрут</v-btn>
+                    <v-text-field v-model="trackName" label="Название маршрута" class="mr-2" variant="outlined"
+                        hide-details="auto" density="compact" width="200"></v-text-field>
+                </div>
+                <v-checkbox-btn v-model="joinTracks" :label="`Объединять треки`"></v-checkbox-btn>
+            </v-col>
+
+
+            
+
+        </div>
         <div ref="mapContainer" class="dialogformap"></div>
 
 
@@ -41,14 +56,18 @@ export default {
             type: Array,
             default: () => [45.049, 41.956],
         },
-        layer: {
-            type: String,
-            default: () => 'openstreetmap',
-        },
     },
     data() {
         return {
-            tracks:false,
+            mapsLayerPath: {
+                openstreetmap: { label: 'openstreetmap', path: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' },
+                opentopomap: { label: 'Opentopomap', path: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png' },
+
+                thunderforest: { label: 'Thunderforest', path: 'https://{s}.tile.thunderforest.com/cycle/{z}/{x}/{y}.png' },
+                thunderforest1: { label: 'Thunderforest outdoors', path: 'https://{s}.tile.thunderforest.com/outdoors/{z}/{x}/{y}.png' },
+            },
+            mapslayer: { label: 'openstreetmap', path: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' },
+            tracks: false,
             panelVisible: false,
             trackName: '',
             map: null,
@@ -67,7 +86,7 @@ export default {
             loading: false,
         };
     },
-    computed:{
+    computed: {
         calculateDistance() {
             let totalDistance = 0;
             for (let i = 0; i < this.route.length - 1; i++) {
@@ -92,9 +111,9 @@ export default {
                 this.updateMarkers(); // Обновляем маркеры при изменении масштаба
             });
 
-            L.tileLayer(`https://{s}.tile.${this.layer}.org/{z}/{x}/{y}.png`, {
+            L.tileLayer(this.mapslayer.path, {
                 maxZoom: 17,
-                attribution: `&copy; <a href="https://${this.layer}.org/copyright">OpenTopoMap</a> contributors`,
+                attribution: `&copy; <a href="https://${this.mapslayer.label}/copyright">OpenTopoMap</a> contributors`,
             }).addTo(this.map);
 
             L.marker(this.coords, this.markerOptions).addTo(this.map).bindPopup(`Координаты: ${this.coords[0]}, ${this.coords[1]}`).openPopup();
@@ -224,6 +243,20 @@ export default {
         },
     },
     watch: {
+        mapslayer(newMapslayer) {
+
+            // Удаляем предыдущий слой, если он существует
+            if (this.currentLayer) {
+                this.map.removeLayer(this.currentLayer);
+            }
+
+
+            // Создаём новый слой и добавляем его на карту
+            this.currentLayer = L.tileLayer(newMapslayer.path, {
+                maxZoom: 17,
+                attribution: `&copy; <a href="https://${newMapslayer.label}/copyright">${newMapslayer.label}</a> contributors`,
+            }).addTo(this.map);
+        },
         coords(newCoords) {
             if (this.map) {
                 this.map.setView(newCoords, 17);
@@ -235,7 +268,7 @@ export default {
 </script>
 
 <style>
-.leaflet-bottom.leaflet-right{
+.leaflet-bottom.leaflet-right {
     opacity: 0;
 }
 </style>
@@ -250,6 +283,4 @@ export default {
     left: 50%;
     transform: translate(-50%, -50%);
 }
-
-
 </style>
