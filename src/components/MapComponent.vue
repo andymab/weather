@@ -48,7 +48,9 @@ vue
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { saveAs } from 'file-saver';
-// import { marker } from 'leaflet';
+import polyline from '@mapbox/polyline';
+
+import axios from 'axios';
 
 export default {
     name: 'MapComponent',
@@ -62,7 +64,6 @@ export default {
         return {
             mapsLayerPath: {
                 openstreetmap: { label: 'openstreetmap', path: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' },
-                osm: { label: 'OpenStreetMap', path: 'http://{s}.tile.osm.org/{z}/{x}/{y}.png' },
                 opentopomap: { label: 'Opentopomap', path: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png' },
 
                 thunderforest: { label: 'Thunderforest', path: 'https://{s}.tile.thunderforest.com/cycle/{z}/{x}/{y}.png' },
@@ -86,7 +87,7 @@ export default {
             route: [],
             polyline: null,
             loading: false,
-            geometryGeoJSON: null,
+
         };
     },
     computed: {
@@ -102,6 +103,7 @@ export default {
     },
     mounted() {
         this.initializeMap();
+        this.addMarkersAndRoute();
 
     },
     methods: {
@@ -121,15 +123,13 @@ export default {
 
             L.marker(this.coords, this.markerOptions).addTo(this.map).bindPopup(`Координаты: ${this.coords[0]}, ${this.coords[1]}`).openPopup();
 
-            if (this.mapslayer.label === 'OpenStreetMap') {
-                this.geometryGeoJSON = L.geoJSON().addTo(this.map);
-            }
+
 
 
             this.map.on('click', (e) => {
                 const { lat, lng } = e.latlng;
                 if (!this.tracks && this.markers.length === 0) {
-                    this.$emit('updateCoords', { lat: lat.toFixed(3), lon: lng.toFixed(3) });
+                    this.$emit('updateCoords', { lat: lat, lon: lng });
                 } else {
                     this.addMarker(lat, lng);
                     this.redrawRoute(); // Перерисовываем линию
@@ -249,6 +249,82 @@ export default {
                 alert("Маршрут пуст!");
             }
         },
+        addMarkersAndRoute() {
+            // Пример двух точек
+            const pointA = { lat: 44.24739708818783, lon: 39.2643964290619 }; // Первая точка
+            const pointB = { lat: 44.24526050089643, lon:  39.29749488830567}; // Вторая точка
+
+            // Добавляем маркеры на карту
+            L.marker([pointA.lat, pointA.lon]).addTo(this.map).bindPopup('Точка A').openPopup();
+            L.marker([pointB.lat, pointB.lon]).addTo(this.map).bindPopup('Точка B').openPopup();
+
+            // Запрашиваем маршрут
+            this.getRoute(pointA, pointB);
+        },
+
+        getRoute(start, end, mode = 'walking') {
+            this.loading = true;
+
+            // Запрос к OSRM API для получения маршрута
+            const url = `http://router.project-osrm.org/route/v1/walking/${start.lon},${start.lat};${end.lon},${end.lat}?overview=full`;
+            //машины http://router.project-osrm.org/route/v1/driving/${start.lon},${start.lat};${end.lon},${end.lat}?overview=full
+            //пешеходы            http://router.project-osrm.org/route/v1/walking/${start.lon},${start.lat};${end.lon},${end.lat}?overview=full
+            //велосипедисты       http://router.project-osrm.org/route/v1/cycling/${start.lon},${start.lat};${end.lon},${end.lat}?overview=full
+
+
+            axios.get(url)
+                .then(response => {
+                    //const route = response.data.routes[0].geometry.coordinates;
+                    const encodedPolyline = response.data.routes[0].geometry;
+                    const decodedRoute = polyline.decode(encodedPolyline); // Декодируем полилинию
+                    this.route = decodedRoute.map(coord => [coord[0], coord[1]]);
+
+                    // Отрисовка маршрута на карте
+                    this.redrawRoute();
+                })
+                .catch(error => {
+                    console.error("Ошибка при получении маршрута:", error);
+                })
+                .finally(() => {
+                    this.loading = false;
+                });
+        },
+//         getRoute(start, end, mode = 'foot') {
+//   this.loading = true;
+//НУЖЕН API OpenRouteService
+//   // Формируем URL для OpenRouteService API
+//   const apiKey = 'YOUR_API_KEY'; // Замените на ваш ключ API OpenRouteService
+//   const url = `https://api.openrouteservice.org/v2/directions/${mode}?start=${start.lon},${start.lat}&end=${end.lon},${end.lat}`;
+
+//   axios.get(url, {
+//     headers: {
+//       'Authorization': apiKey,
+//       'Content-Type': 'application/json'
+//     }
+//   })
+//     .then(response => {
+//       // Проверяем наличие маршрута
+//       if (response.data.routes.length > 0) {
+//         const route = response.data.routes[0]; // Получаем первый маршрут
+//         const decodedRoute = route.geometry.coordinates; // Получаем координаты маршрута
+
+//         // Преобразуем в формат [lat, lon]
+//         this.route = decodedRoute.map(coord => [coord[1], coord[0]]); // Обратите внимание на порядок: [lat, lon]
+
+//         // Отрисовка маршрута на карте
+//         this.redrawRoute();
+//       } else {
+//         console.error("Маршрут не найден или ошибка в запросе");
+//       }
+//     })
+//     .catch(error => {
+//       console.error("Ошибка при получении маршрута:", error);
+//     })
+//     .finally(() => {
+//       this.loading = false;
+//     });
+// }
+
     },
     watch: {
         mapslayer(newMapslayer) {
@@ -264,6 +340,8 @@ export default {
                 maxZoom: 17,
                 attribution: `&copy; <a href="https://${newMapslayer.label}/copyright">${newMapslayer.label}</a> contributors`,
             }).addTo(this.map);
+
+
         },
         coords(newCoords) {
             if (this.map) {
