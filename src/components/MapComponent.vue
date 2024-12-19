@@ -39,6 +39,7 @@ vue
         </div>
         <div ref="mapContainer" class="dialogformap"></div>
 
+        <div ref="containerheights" style="height: 400px;" class="mb-4"></div>
 
         <v-progress-circular v-if="loading" indeterminate color="primary" class="loading-spinner"></v-progress-circular>
     </div>
@@ -49,6 +50,8 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { saveAs } from 'file-saver';
 import polyline from '@mapbox/polyline';
+
+import Highcharts from 'highcharts';
 
 import axios from 'axios';
 
@@ -251,15 +254,26 @@ export default {
         },
         addMarkersAndRoute() {
             // Пример двух точек
-            const pointA = { lat: 44.24739708818783, lon: 39.2643964290619 }; // Первая точка
-            const pointB = { lat: 44.24526050089643, lon:  39.29749488830567}; // Вторая точка
+            const pointA = { lat: 44.237543546598275, lon: 39.260716438293464 }; // Первая точка
+            const pointB = { lat: 44.24526050089643, lon: 39.29749488830567 }; // Вторая точка
 
             // Добавляем маркеры на карту
             L.marker([pointA.lat, pointA.lon]).addTo(this.map).bindPopup('Точка A').openPopup();
             L.marker([pointB.lat, pointB.lon]).addTo(this.map).bindPopup('Точка B').openPopup();
 
             // Запрашиваем маршрут
-            this.getRoute(pointA, pointB);
+            // this.getRoute(pointA, pointB);
+
+            //this.getRoute(pointA, pointB,'foot');
+            this.getRouteOpenroute(pointA, pointB, 'foot-walking'); // 'cycling-regular' 'driving-car code: 2010 message: "Could not find routable point within a radius of 350.0 meters of specified coordinate 1: 39.2974949 44.2452605."'???
+            //foot-walking:Для пешеходных маршрутов.
+            //cycling-regular:Для обычных велосипедных маршрутов.
+            //cycling-mountain:Для горных велосипедных маршрутов.
+            //cycling-road: Для велосипедных маршрутов по дорогам.
+            //cycling-electric: Для маршрутов на электрических велосипедах.
+            //foot-hiking: Для пеших походов и троп.
+            //wheelchair: Для маршрутов, доступных для инвалидных колясок.
+            //driving-car:Для автомобильных маршрутов
         },
 
         getRoute(start, end, mode = 'walking') {
@@ -289,42 +303,166 @@ export default {
                     this.loading = false;
                 });
         },
-//         getRoute(start, end, mode = 'foot') {
-//   this.loading = true;
-//НУЖЕН API OpenRouteService
-//   // Формируем URL для OpenRouteService API
-//   const apiKey = 'YOUR_API_KEY'; // Замените на ваш ключ API OpenRouteService
-//   const url = `https://api.openrouteservice.org/v2/directions/${mode}?start=${start.lon},${start.lat}&end=${end.lon},${end.lat}`;
+        getRouteOpenroute(start, end, mode = 'foot-walking') {
+            this.loading = true;
 
-//   axios.get(url, {
-//     headers: {
-//       'Authorization': apiKey,
-//       'Content-Type': 'application/json'
-//     }
-//   })
-//     .then(response => {
-//       // Проверяем наличие маршрута
-//       if (response.data.routes.length > 0) {
-//         const route = response.data.routes[0]; // Получаем первый маршрут
-//         const decodedRoute = route.geometry.coordinates; // Получаем координаты маршрута
+            // Формируем URL для OpenRouteService API
+            const apiKey = '5b3ce3597851110001cf624807c4aca3606842eda3cbb1e7dc01066b'; // Замените на ваш ключ API OpenRouteService
+            const url = `https://api.openrouteservice.org/v2/directions/${mode}?start=${start.lon},${start.lat}&end=${end.lon},${end.lat}`;
 
-//         // Преобразуем в формат [lat, lon]
-//         this.route = decodedRoute.map(coord => [coord[1], coord[0]]); // Обратите внимание на порядок: [lat, lon]
+            axios.get(url, {
+                headers: {
+                    'Authorization': apiKey,
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => {
+                    // Проверяем наличие маршрута
+                    if (response.data.features.length > 0) {
+                        const route = response.data.features[0]; // Получаем первый маршрут
+                        const decodedRoute = route.geometry.coordinates; // Получаем координаты маршрута
 
-//         // Отрисовка маршрута на карте
-//         this.redrawRoute();
-//       } else {
-//         console.error("Маршрут не найден или ошибка в запросе");
-//       }
-//     })
-//     .catch(error => {
-//       console.error("Ошибка при получении маршрута:", error);
-//     })
-//     .finally(() => {
-//       this.loading = false;
-//     });
-// }
 
+
+                        // Преобразуем в формат [lat, lon]
+                        this.route = decodedRoute.map(coord => [coord[1], coord[0]]); // Обратите внимание на порядок: [lat, lon]
+
+                        // Получаем и рисуем данные о высоте пока не рисуем
+                        this.getElevationData(this.route);
+
+
+                        // Отрисовка маршрута на карте
+                        this.redrawRoute();
+                    } else {
+                        console.error("Маршрут не найден или ошибка в запросе");
+                    }
+                })
+                .catch(error => {
+                    console.error("Ошибка при получении маршрута:", error);
+                })
+                .finally(() => {
+                    this.loading = false;
+                });
+
+            // axios.get(`https://api.openrouteservice.org/elevation/point`,
+            //     {
+            //         "format_in": "geojson",
+            //         "format_out": "geojson",
+            //         "geometry": {
+            //             "coordinates": [13.349762, 38.11295],
+            //             "type": "Point"
+            //         }
+            //     }, {
+            //     headers: {
+            //         'Authorization': apiKey,
+            //         'Content-Type': 'application/json'
+            //     }
+            // })
+            //     .then(response => {
+            //         // Проверяем наличие маршрута
+            //         if (response.data.features.length > 0) {
+            //             const route = response.data.features[0]; // Получаем первый маршрут
+            //             const decodedRoute = route.geometry.coordinates; // Получаем координаты маршрута
+
+            //             // Преобразуем в формат [lat, lon]
+            //             this.route = decodedRoute.map(coord => [coord[1], coord[0]]); // Обратите внимание на порядок: [lat, lon]
+
+            //             // Отрисовка маршрута на карте
+            //             this.redrawRoute();
+            //         } else {
+            //             console.error("Маршрут не найден или ошибка в запросе");
+            //         }
+            //     })
+            //     .catch(error => {
+            //         console.error("Ошибка при получении маршрута:", error);
+            //     })
+            //     .finally(() => {
+            //         this.loading = false;
+            //     });
+
+        },
+
+        getElevationData(coordinates) { //запрос высот по координатам
+            const elevationUrl = `https://api.open-elevation.com/api/v1/lookup`;
+
+            // Формируем массив запросов к API высоты
+             const requests = coordinates.map(coord => ({
+                 latitude: coord[0],
+                 longitude: coord[1]
+             }));
+
+            // const requests = [
+
+            //     {
+            //         "latitude": 10,
+            //         "longitude": 10
+            //     },
+            //     {
+            //         "latitude": 20,
+            //         "longitude": 20
+            //     },
+            //     {
+            //         "latitude": 41.161758,
+            //         "longitude": -8.583933
+            //     }
+
+            //     // { longitude: 39.277958, latitude: 44.238105 },
+            //     // { longitude: 39.278141, latitude: 44.238197 },
+            //     // { longitude: 39.278159, latitude: 44.238262 },
+            //     // { longitude: 39.278121, latitude: 44.238275 },
+            //     // { longitude: 39.278105, latitude: 44.238428 },
+            //     // { longitude: 39.278157, latitude: 44.238526 },
+            //     // { longitude: 39.278338, latitude: 44.238615 },
+            //     // { longitude: 39.278681, latitude: 44.238688 },
+            //     // { longitude: 39.278791, latitude: 44.238679 },
+            //     // { longitude: 39.279044, latitude: 44.238732 },
+            //     // { longitude: 39.279484, latitude: 44.238866 }
+            // ];
+
+            axios.post(elevationUrl, { locations: requests },
+                {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                }
+            )
+                .then(response => {
+                    const elevations = response.data.results.map(result => result.elevation);
+                    this.plotElevationProfile(coordinates, elevations);
+                })
+                .catch(error => {
+                    console.error("Ошибка при получении данных о высоте:", error);
+                });
+        },
+
+        plotElevationProfile(coordinates, elevations) {  ///подготовка к постороению графика высот
+            ///пока не работает
+            const chartData = coordinates.map((coord, index) => ({
+                x: index,
+                y: elevations[index] // Высота по индексу
+            }));
+
+            Highcharts.chart(this.$refs.containerheights, {
+                chart: {
+                    type: 'line'
+                },
+                title: {
+                    text: 'Профиль высот'
+                },
+                xAxis: {
+                    title: { text: 'Точки маршрута' },
+                    categories: coordinates.map((_, index) => `Point ${index + 1}`)
+                },
+                yAxis: {
+                    title: { text: 'Высота (м)' }
+                },
+                series: [{
+                    name: 'Высота',
+                    data: chartData
+                }]
+            });
+        }
     },
     watch: {
         mapslayer(newMapslayer) {
