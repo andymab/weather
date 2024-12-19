@@ -163,6 +163,7 @@ export default {
     },
     data() {
         return {
+            search:'',
             mapslayer: 'openstreetmap',
             drawer: false,
             selectedLocations: [''],
@@ -210,6 +211,9 @@ export default {
 
     },
     methods: {
+        onSearch(){
+            return true;
+        },
         addNotification(message, succes) {
             this.$refs.notification.notify(message, 'success');
         },

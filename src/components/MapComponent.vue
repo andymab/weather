@@ -25,16 +25,16 @@ vue
             <v-col>
                 <v-btn flat class="mr-2" @click="loadRoute">Загрузить маршрут из GPX</v-btn>
                 <div v-if="markers.length > 2" class="d-flex flex-column">
-                   <v-text-field v-model="trackName" label="Название маршрута" class="mt-4" variant="outlined"
-                        hide-details="auto" density="compact" ></v-text-field> 
+                    <v-text-field v-model="trackName" label="Название маршрута" class="mt-4" variant="outlined"
+                        hide-details="auto" density="compact"></v-text-field>
                     <v-btn flat @click="saveRoute" class="mt-2">Сохранить маршрут</v-btn>
-                    
+
                 </div>
                 <v-checkbox-btn v-model="joinTracks" :label="`Объединять треки`"></v-checkbox-btn>
             </v-col>
 
 
-            
+
 
         </div>
         <div ref="mapContainer" class="dialogformap"></div>
@@ -62,6 +62,7 @@ export default {
         return {
             mapsLayerPath: {
                 openstreetmap: { label: 'openstreetmap', path: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' },
+                osm: { label: 'OpenStreetMap', path: 'http://{s}.tile.osm.org/{z}/{x}/{y}.png' },
                 opentopomap: { label: 'Opentopomap', path: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png' },
 
                 thunderforest: { label: 'Thunderforest', path: 'https://{s}.tile.thunderforest.com/cycle/{z}/{x}/{y}.png' },
@@ -85,6 +86,7 @@ export default {
             route: [],
             polyline: null,
             loading: false,
+            geometryGeoJSON: null,
         };
     },
     computed: {
@@ -118,6 +120,11 @@ export default {
             }).addTo(this.map);
 
             L.marker(this.coords, this.markerOptions).addTo(this.map).bindPopup(`Координаты: ${this.coords[0]}, ${this.coords[1]}`).openPopup();
+
+            if (this.mapslayer.label === 'OpenStreetMap') {
+                this.geometryGeoJSON = L.geoJSON().addTo(this.map);
+            }
+
 
             this.map.on('click', (e) => {
                 const { lat, lng } = e.latlng;
@@ -290,9 +297,13 @@ export default {
     position: absolute;
     right: 30px;
     max-width: 360px;
-    z-index: 1000; /* Установите нужный z-index */
-    background-color: white; /* Добавьте фон, если необходимо */
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Добавьте тень для лучшего визуального эффекта */
-    padding: 16px; /* Добавьте отступы, если необходимо */
+    z-index: 1000;
+    /* Установите нужный z-index */
+    background-color: white;
+    /* Добавьте фон, если необходимо */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    /* Добавьте тень для лучшего визуального эффекта */
+    padding: 16px;
+    /* Добавьте отступы, если необходимо */
 }
 </style>
