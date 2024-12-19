@@ -1,16 +1,29 @@
 <template>
     <div>
 
-        <v-navigation-drawer app v-model="drawer" permanent>
+        <v-navigation-drawer app v-model="drawer" permanent width="360">
+            <v-toolbar flat>
+                <v-toolbar-title>Меню</v-toolbar-title>
+                <v-spacer></v-spacer>
+                <v-btn icon @click="drawer = false">
+                    <v-icon>mdi-chevron-left</v-icon>
+                </v-btn>
+
+            </v-toolbar>
+
             <v-form ref="form" @submit.prevent="getWeather" width="100%">
                 <v-container fluid>
 
                     <v-row>
-                        <v-col cols="12" md="12" v-for="(location, index) in selectedLocations">
-                            <v-select v-model="selectedLocations[index]" :items="locations" label="Выберите место"
+                        <v-col cols="12" md="12" v-for="(location, index) in selectedLocations" :key="index">
+                            <v-autocomplete v-model="selectedLocations[index]" :items="locations" label="Выберите место"
                                 required item-text="title" item-value="value" variant="outlined" hide-details
-                                density="comfortable" :rules="[rules.required]">
-                            </v-select>
+                                density="comfortable" :rules="[rules.required]" :search-input.sync="search"
+                                @update:search-input="onSearch" clearable>
+                                <template v-slot:selection="{ item }">
+                                    <div>{{ item ? item.title : 'Выберите место' }}</div>
+                                </template>
+                            </v-autocomplete>
                         </v-col>
                     </v-row>
                     <div class="d-flex mt-4">
@@ -26,8 +39,7 @@
                         <v-spacer></v-spacer>
                         <v-tooltip text="Добавить к сравнению">
                             <template v-slot:activator="{ props }">
-                                <v-btn icon @click="addLocation" v-bind="props"
-                                    ><v-icon>mdi-plus</v-icon></v-btn>
+                                <v-btn icon @click="addLocation" v-bind="props"><v-icon>mdi-plus</v-icon></v-btn>
                             </template>
                         </v-tooltip>
 
@@ -39,16 +51,16 @@
 
                 <v-container fluid>
                     <v-row>
-                        <v-col cols="12"  xs="12" >
+                        <v-col cols="12" xs="12">
                             <v-text-field v-model="customName" label="Место" variant="outlined" hide-details="auto"
                                 density="comfortable" required :rules="[rules.required]"></v-text-field>
                         </v-col>
-                        <v-col  cols="12"  xs="12">
+                        <v-col cols="12" xs="12">
                             <v-text-field v-model="customLat" label="Широта (45.05)" variant="outlined"
                                 hide-details="auto" density="comfortable" required
                                 :rules="[rules.required, rules.isfloat]"></v-text-field>
                         </v-col>
-                        <v-col  cols="12"  xs="12">
+                        <v-col cols="12" xs="12">
                             <v-text-field v-model="customLon" label="Долгота (41.95)" variant="outlined"
                                 hide-details="auto" density="comfortable" required
                                 :rules="[rules.required, rules.isfloat]"></v-text-field>
@@ -72,10 +84,11 @@
         <v-container fluid class="pt-0">
             <Notification ref="notification" />
             <v-toolbar app>
-                <v-btn icon @click="drawer = !drawer">
-                    <v-icon>{{ !drawer ? 'mdi-chevron-right' : 'mdi-chevron-left' }}</v-icon>
-                </v-btn>
-                <v-spacer></v-spacer>
+                <div v-show="drawer === false" class="mr-2">
+                    <v-btn icon @click="drawer = true" >
+                        <v-icon>mdi-chevron-right</v-icon>
+                    </v-btn>
+                </div>
                 <v-toolbar-title>Погода {{ period }}</v-toolbar-title>
 
 
@@ -176,6 +189,9 @@ export default {
         this.fetchLocations();
     },
     computed: {
+        isXs() {
+            return this.$vuetify.display.xs;
+        },
         getFirstCoords() {
             if (this.selectedLocations[0]) {
                 return [this.selectedLocations[0].lat, this.selectedLocations[0].lon];
@@ -226,7 +242,7 @@ export default {
         },
         async fetchLocations() {
             try {
-                const response = await fetch('/locations.json');
+                const response = await fetch(`/locations.json?cacheBust=${new Date().getTime()}`);
                 this.locations = await response.json();
                 this.selectedLocations[0] = this.locations[0].value;
                 this.getWeather();
@@ -268,6 +284,7 @@ export default {
                                 },
                             });
                             this.weatherData.push(response.data);
+                            this.drawer = false;
                         } catch (error) {
                             console.error(`Error fetching weather data for location at index ${index}:`, error);
                         }

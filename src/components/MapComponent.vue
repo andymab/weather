@@ -10,7 +10,7 @@ vue
             </v-btn>
         </v-toolbar>
 
-        <div v-if="panelVisible" :class="'d-flex' + ($vuetify.display.xs ? 'flex-column pb-4' : '')">
+        <div v-if="panelVisible" class="settings-panel">
             <v-col>
                 <p>Слои </p>
                 <v-radio-group density="comfortable" class="mt-2" v-model="mapslayer">
@@ -24,10 +24,11 @@ vue
             </v-col>
             <v-col>
                 <v-btn flat class="mr-2" @click="loadRoute">Загрузить маршрут из GPX</v-btn>
-                <div v-if="markers.length > 2" :class="`d-flex ` + ($vuetify.display.xs ? 'flex-column' : '')">
-                    <v-btn flat @click="saveRoute" class="mr-2">Сохранить маршрут</v-btn>
-                    <v-text-field v-model="trackName" label="Название маршрута" class="mr-2" variant="outlined"
-                        hide-details="auto" density="compact" width="200"></v-text-field>
+                <div v-if="markers.length > 2" class="d-flex flex-column">
+                   <v-text-field v-model="trackName" label="Название маршрута" class="mt-4" variant="outlined"
+                        hide-details="auto" density="compact" ></v-text-field> 
+                    <v-btn flat @click="saveRoute" class="mt-2">Сохранить маршрут</v-btn>
+                    
                 </div>
                 <v-checkbox-btn v-model="joinTracks" :label="`Объединять треки`"></v-checkbox-btn>
             </v-col>
@@ -282,5 +283,16 @@ export default {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+}
+
+
+.settings-panel {
+    position: absolute;
+    right: 30px;
+    max-width: 360px;
+    z-index: 1000; /* Установите нужный z-index */
+    background-color: white; /* Добавьте фон, если необходимо */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Добавьте тень для лучшего визуального эффекта */
+    padding: 16px; /* Добавьте отступы, если необходимо */
 }
 </style>
