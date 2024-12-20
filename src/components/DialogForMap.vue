@@ -14,13 +14,13 @@
 
             <v-card>
                 <!-- <v-card-title> -->
-                    <v-card-text class="pt-0">
+                <v-card-text class="pt-0">
                     <div v-if="$vuetify.display.xs">
-                        <div class="d-flex align-center" >
-   
+                        <div class="d-flex align-center">
+
                             <span class="text-wrap">Выберите точку</span>
-                         
-  
+
+
                             <v-spacer></v-spacer>
                             <v-btn icon flat @click="dialog = false"><v-icon>mdi-close</v-icon></v-btn>
                         </div>
@@ -31,16 +31,14 @@
                         <v-spacer></v-spacer>
                         <v-btn icon flat @click="dialog = false"><v-icon>mdi-close</v-icon></v-btn>
                     </div>
-
-                <!-- </v-card-title> -->
-                
-
-                    <MapComponent @updateCoords="updateCoords" :coords="getCoords" :layer="getlayer"  />
+                    <MapComponent @updateCoords="updateCoords" :coords="getCoords" :layer="getlayer" />
+                    <!-- </v-card-title> -->
                 </v-card-text>
 
 
             </v-card>
         </v-dialog>
+
     </div>
 </template>
 
@@ -49,6 +47,7 @@
 <script>
 import MapComponent from './MapComponent.vue';
 export default {
+    name: 'DialogForMap',
     components: {
         MapComponent
     },
