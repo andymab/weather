@@ -1,6 +1,6 @@
 <template>
     <v-icon v-for="(track, index) in trackmode" :key="index" :class="{'selected-icon': selectedMode === track.mode}"
-        @click="selectMode(track.mode)" v-tooltip.bottom=" track.label" class="ma-2">
+        @click="selectMode(track.mode)" v-tooltip.bottom=" track.label" class="ma-2 text-teal-lighten-3">
         {{ track.icon }}
     </v-icon>
 </template>
@@ -36,5 +36,6 @@
     .selected-icon {
         background-color: rgb(11, 11, 11);
         color: aliceblue;
+        border-radius: 5px;
     }
 </style>

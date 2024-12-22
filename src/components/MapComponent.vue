@@ -1,29 +1,47 @@
 vue
 <template>
     <div style="position: relative;">
-        <v-toolbar flat>
+        <v-btn rounded="0" class="text-white " width="380px" style="position:absolute; right:0; z-index:2000"
+            color="light-green" @click="togglePanel">
+            Настройки маршрута
+            <v-icon :icon="panelVisible ? 'mdi-chevron-up' : 'mdi-chevron-down'" end></v-icon>
+        </v-btn>
+        <!-- <v-toolbar flat>
             <v-toolbar-title>Настройки маршрута <span v-if="route.length > 1">{{ calculateDistance
                     }}</span></v-toolbar-title>
 
             <v-btn icon @click="togglePanel">
                 <v-icon>{{ panelVisible ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
             </v-btn>
-        </v-toolbar>
+        </v-toolbar> -->
 
         <div v-if="panelVisible" class="settings-panel">
-            <v-tabs v-model="tab" background-color="transparent">
-                <v-tab value="layer"> Слой карты</v-tab>
+            <!-- <v-card width="360px"> -->
+            <v-tabs v-model="tab" background-color="transparent" class="pa-0 ma-0">
+                <v-tab value="layer"> {{$vuetify.display.xs ? 'Слой' : 'Слой карты' }} </v-tab>
                 <v-tab value="custom-track"> Маршрут </v-tab>
+                <v-tab value="elevations"> Высоты </v-tab>
+
             </v-tabs>
 
-            <v-tabs-window v-model="tab">
+            <v-tabs-window v-model="tab" class="pa-0 ma-0">
                 <v-tabs-window-item value="layer">
                     <SelectLayer @changeLayer="selectLayer" />
                 </v-tabs-window-item>
                 <v-tabs-window-item value="custom-track">
-                    <v-checkbox-btn v-model="tracks" :label="`Режим редактирования`"></v-checkbox-btn>
-                    <div v-if="markers.length > 1">
-                        <v-checkbox-btn v-model="autotrack" :label="`Проложить автоматически для:`"></v-checkbox-btn>
+                    <div class="d-flex">
+                        <v-icon @click="tracks = !tracks" v-tooltip.bottom="`Редактировать`" class="ma-2 "
+                            :class="{'text-green-accent-3': tracks, ' grey-lighten-2 ': !tracks}">mdi-vector-square-edit</v-icon>
+                        <v-icon @click="autotrack = !autotrack" :disabled="!tracks"
+                            v-tooltip.bottom="`Проложить автоматически`" class="ma-2 "
+                            :class="{'text-teal-lighten-3': autotrack, ' grey-lighten-2 ': !autotrack}">mdi-arrow-decision-auto-outline</v-icon>
+                        <v-icon @click="joinTracks = !joinTracks" :disabled="!tracks"
+                            v-tooltip.bottom="`Объединять загруженые треки`" class="ma-2 "
+                            :class="{'text-green-accent-3': joinTracks, ' grey-lighten-2 ': !joinTracks}">mdi-group</v-icon>
+
+                    </div>
+
+                    <div v-if="autotrackPropertys.summary || (tracks && markers.length > 1)">
                         <div v-if="autotrack" class="d-flex flex-wrap">
                             <TrackMode @changeMode="selectMode" />
                         </div>
@@ -33,537 +51,890 @@ vue
                         <div v-if="elevations.length > 0" class="mb-2">
                             <v-alert :text="`${calculateElevation}`" type="warning"></v-alert>
                         </div>
-
-
                     </div>
-                    <v-btn v-if="markers.length > 2" flat @click="removeLastPoint" class="">Удалить последнюю
-                        точку</v-btn>
-                    <v-btn v-if="markers.length > 0" flat @click="removeAllPoints" class="">Удалить все точки</v-btn>
 
-                    <v-btn v-if="markers.length > 0" flat @click="removeAllMarkers" class="">Удалить все маркеры</v-btn>
-                    <v-col>
-                        <v-btn flat class="mr-2" @click="loadRoute">Загрузить маршрут из GPX</v-btn>
-                        <div v-if="markers.length > 2" class="d-flex flex-column">
-                            <v-text-field v-model="trackName" label="Название маршрута" class="mt-4" variant="outlined"
-                                hide-details="auto" density="compact"></v-text-field>
-                            <v-btn flat @click="saveRoute" class="mt-2">Сохранить маршрут</v-btn>
+                    <div class="d-flex">
+                        <v-icon @click="removeLastPoint" :disabled="markers.length == 0"
+                            v-tooltip.bottom="`Удалить последнюю точку`"
+                            class="ma-2 text-amber-accent-4">mdi-vector-square-remove</v-icon>
+                        <v-icon @click="removeAllPoints" v-tooltip.bottom="`Удалить все точки`"
+                            class="ma-2 text-amber-accent-4"
+                            :disabled="markers.length == 0">mdi-delete-forever-outline</v-icon>
+                        <v-icon @click="removeAllMarkers" v-tooltip.bottom="`Удалить все маркеры`"
+                            class="ma-2 text-amber-accent-4"
+                            :disabled="markers.length == 0">mdi-delete-circle-outline</v-icon>
+                    </div>
+
+                    <div class="d-flex justify-space-around">
+                        <div class="d-flex">
+                            <v-icon size="x-large" @click="loadRoute" v-tooltip.bottom="`Загрузить маршрут (.GPX)`"
+                                class="ma-2 text-teal-lighten-3">mdi-briefcase-upload-outline</v-icon>
+                            <v-icon size="x-large" @click="openDialogFileName(('saveRoute'))"
+                                v-tooltip.bottom="`Сохранить маршрут (.GPX)`"
+                                class="ma-2 text-teal-lighten-3">mdi-briefcase-download-outline</v-icon>
 
                         </div>
-                        <v-checkbox-btn v-model="joinTracks" :label="`Объединять треки`"></v-checkbox-btn>
-                    </v-col>
+                        <div class="d-flex">
+                            <!-- <v-text-field v-model="trackName" label="Название маршрута" class="" variant="outlined"
+                            hide-details="auto" density="compact"></v-text-field> -->
+                            <v-icon size="x-large" @click="loadRouteElevation" v-tooltip.bottom="`c высотами  (.JSON)`"
+                                class="ma-2 text-teal-lighten-3">mdi-tray-arrow-up</v-icon>
+                            <v-icon size="x-large" @click="openDialogFileName('saveRouteElevation')"
+                                v-tooltip.bottom="`с высотами (.JSON)`"
+                                class="ma-2 text-teal-lighten-3">mdi-tray-arrow-down </v-icon>
+                        </div>
+                    </div>
+                </v-tabs-window-item>
+                <v-tabs-window-item value="elevations">
+                    <ElevationChart :elevationData="elevationData" :route="route" @addTrackMarker="addTrackMarker"
+                        :textdistance="`${distance} ${times} ${calculateAverageSpeed}`"
+                        :textelevation="calculateElevation" />
                 </v-tabs-window-item>
             </v-tabs-window>
-
+            <!-- </v-card> -->
         </div>
+
         <div ref="mapContainer" class="dialogformap"></div>
-        <div v-show="elevations.length > 0" ref="containerheights"  class="elevations">  </div>
+
 
         <Notification ref="notification" />
         <v-progress-circular v-if="loading" indeterminate color="primary" class="loading-spinner"></v-progress-circular>
+
+
+
+        <v-dialog v-model="dialogFileName" max-width="400">
+            <v-card>
+                <v-card-title>
+                    <span class="headline">Введите имя файла</span>
+                </v-card-title>
+                <v-card-text>
+                    <v-text-field v-model="trackName" label="Название маршрута" required
+                        :rules="[v => !!v || 'Это поле обязательно']"></v-text-field>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="primary" @click="executeSave" :disabled="!trackName">Сохранить</v-btn>
+                    <v-btn text @click="closeDialogFileName">Отмена</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </div>
 </template>
 
 <script>
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import { saveAs } from 'file-saver';
-import polyline from '@mapbox/polyline';
+    import { icons } from './MapComponent/iconsleaflet';
+    import { reactive } from 'vue';
+    import L from 'leaflet';
+    import 'leaflet/dist/leaflet.css';
+    import polyline from '@mapbox/polyline';
 
-import TrackMode from './MapComponent/TrackMode.vue';
-import SelectLayer from './MapComponent/SelectLayer.vue';
-import Notification from './Notification.vue';
+    import { saveAs } from 'file-saver';
+  
+
+    import TrackMode from './MapComponent/TrackMode.vue';
+    import SelectLayer from './MapComponent/SelectLayer.vue';
+    import ElevationChart from './MapComponent/ElevationChart.vue';
+    import Notification from './Notification.vue';
 
 
-import Highcharts from 'highcharts';
 
-import axios from 'axios';
+    import axios from 'axios';
 
-export default {
-    name: 'MapComponent',
-    components: {
-        TrackMode, Notification, SelectLayer,
-    },
-    props: {
-        coords: {
-            type: Array,
-            default: () => [45.049, 41.956],
+    export default {
+        name: 'MapComponent',
+        components: {
+            TrackMode, Notification, SelectLayer, ElevationChart,
         },
-    },
-    data() {
-        return {
-            chart: null,
-            tab: 'layer',
-            autotrack: false,
-
-            selectedMode: 'foot-walking',
-            selectedlayer: { label: 'openstreetmap', path: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' },
-
-
-            autotrackPropertys: {}, //свойства участков трека созданых автоматически
-            elevations: [],
-            tracks: false,
-            panelVisible: false,
-            trackName: '',
-            map: null,
-            markers: [], // Массив для хранения ссылок на маркеры
-            joinTracks: false,
-            markerOptions: {
-                draggable: true,
-                icon: L.divIcon({
-                    className: 'custom-marker',
-                    html: `<div style="background-color: #ff7800; border-radius: 50%; width: 10px; height: 10px;"></div>`,
-                    iconSize: [10, 10]
-                })
+        props: {
+            coords: {
+                type: Array,
+                default: () => [45.049, 41.956],
             },
-            route: [],
-            polyline: null,
-            loading: false,
+        },
+        data() {
+            return {
+                dialogFileName: false,
+                chart: null,
+                tab: 'layer',
+                autotrack: false,
 
-        };
-    },
-    computed: {
-        distance() {
-            if (this.autotrackPropertys.summary) {
-                return `${(this.autotrackPropertys.summary.distance / 1000).toFixed(2)} км`;
-            }
-        },
-        times() {
-            if (this.autotrackPropertys.summary) {
-                const seconds = this.autotrackPropertys.summary.duration;
-                const hours = Math.floor(seconds / 3600); // Получаем целые часы
-                const minutes = Math.floor((seconds % 3600) / 60); // Получаем оставшиеся минуты
-
-                return `${hours}:${minutes} час`;
-            }
-        },
-        calculateAverageSpeed() {
-            if (this.autotrackPropertys.summary) {
-                const distanceInKilometers = this.autotrackPropertys.summary.distance / 1000;
-                const timeInHours = this.autotrackPropertys.summary.duration / 3600;
-
-                // Вычисляем среднюю скорость
-                return `${(distanceInKilometers / timeInHours).toFixed(0)} км/ч`; // Средняя скорость в км/ч
-            }
-        },
-        calculateDistance() {
-            let totalDistance = 0;
-            for (let i = 0; i < this.route.length - 1; i++) {
-                const pointA = L.latLng(this.route[i]);
-                const pointB = L.latLng(this.route[i + 1]);
-                totalDistance += pointA.distanceTo(pointB); // Расстояние в метрах
-            }
-            return `${totalDistance.toFixed(2)}м`; // Возвращает общее расстояние
-        },
-        calculateElevation() {
-            if (this.elevations.length > 0) {
-                const minElevation = Math.min(...this.elevations);
-                const maxElevation = Math.max(...this.elevations);
-                const elevationDifference = maxElevation - minElevation;
-                return `${elevationDifference}м : ${minElevation} - ${maxElevation}м  `;
-            }
-        }
-    },
-    mounted() {
-        this.initializeMap();
-        this.initializeChart();
-        this.addChartEvents();
-    },
-    methods: {
-        initializeChart() {
-            this.chart = Highcharts.chart(this.$refs.containerheights, {
-                chart: {
-                    type: 'line',
+                selectedMode: 'foot-walking',
+                selectedlayer: { label: 'Opentopomap', path: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png' },
+                currentMarker: null,
+                currentLayer: null,
+                routesLocation: {},//полученный из файла
+                features: [],
+                elevationsLocation: [],
+                autotrackPropertys: reactive({}), //свойства участков трека созданых автоматически
+                elevations: [],
+                elevationData: [],
+                tracks: false,
+                panelVisible: false,
+                trackName: '',
+                map: null,
+                markers: [], // Массив для хранения ссылок на маркеры
+                joinTracks: false,
+                markerOptions: {
+                    draggable: true,
+                    icon: L.divIcon({
+                        className: 'custom-marker',
+                        html: `<div style="background-color: #FF9800; border-radius: 50%; width: 10px; height: 10px;"></div>`,
+                        iconSize: [10, 10]
+                    })
                 },
-                title: {
-                    text: ''
-                },
-                xAxis: {
-                    title: { text: '' },
-                    categories: ['1','4','12'] // Изначально пустой массив категорий
-                },
-                yAxis: {
-                    title: { text: '' }
-                },
-                series: [{
-                    name: 'Высота',
-                    data: [1,4,12] // Изначально пустой массив данных
-                }]
-            });
 
-
-
+                route: [],
+                polyline: null,
+                loading: false,
+                saveFunction: null,
+            };
         },
-        addChartEvents() {
-            // Добавляем событие клика по контейнеру графика
-            Highcharts.addEvent(this.chart.container, 'click', (e) => {
-                e = this.chart.pointer.normalize(e); // Нормализуем координаты события
-                console.log(`C ${e.point.index}`);
-                console.log(`Clicked chart at ${e.chartX}, ${e.chartY}`);
-            });
+        computed: {
+            distance() {
+                if (this.autotrackPropertys.summary) {
+                    return `${(this.autotrackPropertys.summary.distance / 1000).toFixed(2)} км`;
+                }
+            },
+            times() {
+                if (this.autotrackPropertys.summary) {
+                    const seconds = this.autotrackPropertys.summary.duration;
+                    const hours = Math.floor(seconds / 3600); // Получаем целые часы
+                    const minutes = Math.floor((seconds % 3600) / 60); // Получаем оставшиеся минуты
 
+                    return `${hours}:${minutes} час`;
+                }
+            },
+            calculateAverageSpeed() {
+                if (this.autotrackPropertys.summary) {
+                    const distanceInKilometers = this.autotrackPropertys.summary.distance / 1000;
+                    const timeInHours = this.autotrackPropertys.summary.duration / 3600;
+
+                    // Вычисляем среднюю скорость
+                    return `${(distanceInKilometers / timeInHours).toFixed(0)} км/ч`; // Средняя скорость в км/ч
+                }
+            },
+            calculateDistance() {
+                let totalDistance = 0;
+                for (let i = 0; i < this.route.length - 1; i++) {
+                    const pointA = L.latLng(this.route[i]);
+                    const pointB = L.latLng(this.route[i + 1]);
+                    totalDistance += pointA.distanceTo(pointB); // Расстояние в метрах
+                }
+                return `${totalDistance.toFixed(2)}м`; // Возвращает общее расстояние
+            },
+            calculateElevation() {
+                if (this.elevations.length > 0) {
+                    const minElevation = Math.min(...this.elevations);
+                    const maxElevation = Math.max(...this.elevations);
+                    const elevationDifference = maxElevation - minElevation;
+                    return `${elevationDifference}м : ${minElevation} - ${maxElevation}м  `;
+                }
+            }
         },
-        addNotification(message, succes) {
-            this.$refs.notification.notify(message, succes);
+        mounted() {
+            this.initializeMap();
         },
-        selectLayer(mode) {
-            this.selectedlayer = mode;
-        },
-        selectMode(mode) {
-            this.selectedMode = mode;
-            // Получаем первый маркер
-            // const firstMarker = this.markers[0];
-            // const firstLatLng = firstMarker.getLatLng(); // Получаем координаты первого маркера
-            // const firstCoordinates = { lat: firstLatLng.lat, lon: firstLatLng.lng };
-            //пред последний
-            const firstMarker = this.markers[this.markers.length - 2];
-            const firstLatLng = firstMarker.getLatLng(); // Получаем координаты первого маркера
-            const firstCoordinates = { lat: firstLatLng.lat, lon: firstLatLng.lng };
+        methods: {
+            initializeMap() {
+                this.map = L.map(this.$refs.mapContainer).setView(this.coords, 15);
+                this.map.on('zoomend', () => {
+                    this.updateMarkers(); // Обновляем маркеры при изменении масштаба
+                });
+                // map.on('moveend', () => { //можно но не замечал
+                //     this.updateMarkers();
+                // });
+                this.currentLayer = L.tileLayer(this.selectedlayer.path, {
+                    maxZoom: 17,
+                    attribution: `&copy; <a href="https://${this.selectedlayer.label}/copyright">OpenTopoMap</a> contributors`,
+                }).addTo(this.map);
+                this.currentMarker = L.marker(this.coords, this.markerOptions).addTo(this.map).bindPopup(`Координаты: ${this.coords[0]}, ${this.coords[1]}`).openPopup();
+                this.map.on('click', (e) => {
+                    const { lat, lng } = e.latlng;
+                    if (!this.tracks && this.markers.length === 0) {
+                        if (this.currentMarker) {
+                            // this.map.removeLayer(this.currentMarker);
+                            this.currentMarker = null;
+                        }
+                        this.$emit('updateCoords', { lat: lat, lon: lng });
+                    } else {
+                        if (this.currentMarker) {
+                            this.currentMarker = null;
+                        }
+                        this.addMarker(lat, lng);
+                        this.redrawRoute(); // Перерисовываем линию
+                    }
+                });
+            },
+            addMarker(lat, lng) {
+                this.markerOptions.draggable = false;
+                const marker = L.marker([lat, lng], this.markerOptions).addTo(this.map);
+                this.markers.push(marker);
+                // marker.on('dragend', (event) => {
+                //     // const marker = event.target;
+                //     const position = marker.getLatLng();
 
-            // Получаем последний маркер
-            const lastMarker = this.markers[this.markers.length - 1];
-            const lastLatLng = lastMarker.getLatLng(); // Получаем координаты последнего маркера
-            const lastCoordinates = { lat: lastLatLng.lat, lon: lastLatLng.lng };
+                //     // Обновляем координаты в вашем массиве маршрута
+                //     const index = this.route.findIndex(coord => coord[0] === lat && coord[1] === lng);
+                //     if (index !== -1) {
+                //         this.route[index] = [position.lat, position.lng]; // Обновляем координаты
+                //     }
+                //     // Перерисовываем линию
+                //     this.redrawRoute();
+                // });
+                // Добавляем координаты в маршрут
+                this.route.push([lat, lng]);
+            },
+            openDialogFileName(func) {
+                this.saveFunction = func;
+                this.dialogFileName = true;
+            },
+            closeDialogFileName() {
+                this.dialogFileName = false;
+                this.trackName = ''; // Сбрасываем имя файла
+                this.saveFunction = null; // Сбрасываем функци
+            },
+            executeSave() {
+                if (this.trackName && this.saveFunction) {
+                    if (this.saveFunction === 'saveRoute') {
+                        this.saveRoute();
+                    } else if (this.saveFunction === 'saveRouteElevation') {
+                        this.saveRouteElevation();
+                    }
+                    // Закрываем диалог после сохранения
+                    this.closeDialogFileName();
+                }
+            },
+            getDuration(duration) {
+                // if(duration < 3600){
+                //     const minutes = Math.floor((duration % 3600)); // Получаем оставшиеся минуты
+                //     return `${minutes} мин`;
+                // }
+                const hours = Math.floor(duration / 3600); // Получаем целые часы
+                const minutes = Math.floor((duration % 3600) / 60); // Получаем оставшиеся минуты
+                return `${hours} ч:${minutes} мин`;
+            },
+            getDistance(distance) {
+                if (distance < 1000) {
+                    return `${distance.toFixed(2)} м`;
+                }
+                return `${(distance / 1000).toFixed(2)} км`;
+            },
+            selectLayer(mode) {
+                this.selectedlayer = mode;
+            },
+            selectMode(mode) {
+                this.selectedMode = mode;
 
-            console.log('Координаты первого маркера:', firstCoordinates);
-            console.log('Координаты последнего маркера:', lastCoordinates);
-            this.getRouteOpenroute(firstCoordinates, lastCoordinates, mode);
-        },
-        togglePanel() {
-            this.panelVisible = !this.panelVisible; // Переключаем состояние видимости панели
-        },
-        initializeMap() {
-            this.map = L.map(this.$refs.mapContainer).setView(this.coords, 15);
-            this.map.on('zoomend', () => {
-                this.updateMarkers(); // Обновляем маркеры при изменении масштаба
-            });
+                if (this.markers.length > 2) {
+                    const coordinatesArray = this.markers.map(marker => {
+                        const latLng = marker.getLatLng(); // Получаем координаты маркера
+                        return [latLng.lng, latLng.lat]; // Возвращаем массив с координатами
+                    });
+                    this.getRouteOpenroutePOST(coordinatesArray, mode);
+                }
+                //пред последний
+                const firstMarker = this.markers[this.markers.length - 2];
+                const firstLatLng = firstMarker.getLatLng(); // Получаем координаты первого маркера
+                const firstCoordinates = { lat: firstLatLng.lat, lon: firstLatLng.lng };
 
-            L.tileLayer(this.selectedlayer.path, {
-                maxZoom: 17,
-                attribution: `&copy; <a href="https://${this.selectedlayer.label}/copyright">OpenTopoMap</a> contributors`,
-            }).addTo(this.map);
+                // Получаем последний маркер
+                const lastMarker = this.markers[this.markers.length - 1];
+                const lastLatLng = lastMarker.getLatLng(); // Получаем координаты последнего маркера
+                const lastCoordinates = { lat: lastLatLng.lat, lon: lastLatLng.lng };
 
-            L.marker(this.coords, this.markerOptions).addTo(this.map).bindPopup(`Координаты: ${this.coords[0]}, ${this.coords[1]}`).openPopup();
+                // console.log('Координаты первого маркера:', firstCoordinates);
+                // console.log('Координаты последнего маркера:', lastCoordinates);
+                this.getRouteOpenroute(firstCoordinates, lastCoordinates, mode);
+            },
+            getRouteOpenroutePOST(coordinates, mode = 'foot-walking') {
+                this.loading = true;
+                // Формируем URL для OpenRouteService API
+                const apiKey = '5b3ce3597851110001cf624807c4aca3606842eda3cbb1e7dc01066b'; // Замените на ваш ключ API OpenRouteService
+                const url = `https://api.openrouteservice.org/v2/directions/${mode}`;
+
+                axios.post(url, {
+                    coordinates
+                }, {
+                    headers: {
+                        'Accept': 'application/json, application/geo+json, application/gpx+xml, img/png; charset=utf-8',
+                        'Authorization': apiKey,
+                        'Content-Type': 'application/json; charset=utf-8'
+                    }
+                })
+                    .then(response => {
+                        /// if (response.data.features.length > 0) здесь этого нет 
+                        if (response.data.routes.length > 0) {
+                            this.routesLocation = response.data;
+                            this.updateRoute(response.data);
+                        } else {
+                            console.error("Маршрут не найден или ошибка в запросе");
+                        }
+                    })
+                    .catch(error => {
+                        this.message("Ошибка при получении маршрута:", false);
+                        console.error("Ошибка при получении маршрута:", error);
+                    })
+                    .finally(() => {
+                        this.loading = false;
+                    });
 
 
+            },
+            getRouteOpenroute(start, end, mode = 'foot-walking') {
 
+                this.loading = true;
+                // Формируем URL для OpenRouteService API
+                const apiKey = '5b3ce3597851110001cf624807c4aca3606842eda3cbb1e7dc01066b'; // Замените на ваш ключ API OpenRouteService
+                const url = `https://api.openrouteservice.org/v2/directions/${mode}?start=${start.lon},${start.lat}&end=${end.lon},${end.lat}`;
 
-            this.map.on('click', (e) => {
-                const { lat, lng } = e.latlng;
-                if (!this.tracks && this.markers.length === 0) {
-                    this.$emit('updateCoords', { lat: lat, lon: lng });
+                axios.get(url, {
+                    headers: {
+                        'Authorization': apiKey,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                    .then(response => {
+                        // Проверяем наличие маршрута
+                        if (response.data.features.length > 0) {
+                            this.routesLocation = response.data;
+                            this.updateRoute(response.data);
+                        } else {
+                            console.error("Маршрут не найден или ошибка в запросе");
+                        }
+                    })
+                    .catch(error => {
+                        this.message("Ошибка при получении маршрута:", false);
+                        console.error("Ошибка при получении маршрута:", error);
+                    })
+                    .finally(() => {
+                        this.loading = false;
+                    });
+            },
+
+            togglePanel() {
+                this.panelVisible = !this.panelVisible; // Переключаем состояние видимости панели
+            },
+
+            addTrackMarker(route) {
+
+                this.markerOptions.draggable = false;
+                const marker = L.marker([route[0], route[1]], this.markerOptions).addTo(this.map);
+                this.markers.push(marker);
+            },
+
+            redrawRoute() {
+                // Удаляем старую полилинию, если она существует
+                if (this.polyline) {
+                    this.map.removeLayer(this.polyline);
+                }
+                // Создаем новую полилинию с обновленными координатами
+                this.polyline = L.polyline(this.route, { color: '#F57F17' }).addTo(this.map);
+                // Обновляем маркеры, если нужно
+
+            },
+            message(message, status) {
+                let notificationType;
+
+                if (typeof status === undefined || status === true) {
+                    notificationType = 'success';
+                } else if (status) {
+                    notificationType = status;
                 } else {
-                    this.addMarker(lat, lng);
-                    this.redrawRoute(); // Перерисовываем линию
+                    notificationType = 'error'; // по умолчанию
                 }
-            });
-        },
-        addMarker(lat, lng) {
-            const marker = L.marker([lat, lng], this.markerOptions).addTo(this.map);
-            this.markers.push(marker);
-
-            marker.on('dragend', (event) => {
-                // const marker = event.target;
-                const position = marker.getLatLng();
-
-                // Обновляем координаты в вашем массиве маршрута
-                const index = this.route.findIndex(coord => coord[0] === lat && coord[1] === lng);
-                if (index !== -1) {
-                    this.route[index] = [position.lat, position.lng]; // Обновляем координаты
+                this.$refs.notification.notify(message, notificationType);
+            },
+            updateMarkers() {
+                // Обновляем позиции маркеров
+                this.markers.forEach(marker => {
+                    marker.update(); // Обновляем положение маркера
+                });
+                // this.markers.forEach((marker, index) => {
+                //     if (this.route[index]) {
+                //         marker.setLatLng(this.route[index]); // Устанавливаем новую позицию маркера
+                //     }
+                // });
+            },
+            saveRoute() {
+                if (this.route.length === 0) {
+                    alert("Маршрут пуст!");
+                    return;
                 }
-                // Перерисовываем линию
-                this.redrawRoute();
-            });
-            // Добавляем координаты в маршрут
-            this.route.push([lat, lng]);
-        },
-        redrawRoute() {
-            // Удаляем старую полилинию, если она существует
-            if (this.polyline) {
-                this.map.removeLayer(this.polyline);
-            }
-            // Создаем новую полилинию с обновленными координатами
-            this.polyline = L.polyline(this.route, { color: 'blue' }).addTo(this.map);
-            // Обновляем маркеры, если нужно
-
-        },
-        updateMarkers() {
-            // Обновляем позиции маркеров
-            this.markers.forEach((marker, index) => {
-                if (this.route[index]) {
-                    marker.setLatLng(this.route[index]); // Устанавливаем новую позицию маркера
-                }
-            });
-        },
-        saveRoute() {
-            if (this.route.length === 0) {
-                alert("Маршрут пуст!");
-                return;
-            }
-            let gpxData = `<?xml version="1.0" encoding="UTF-8"?>
+                let gpxData = `<?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1" creator="Leaflet GPX Export">
     <trk>
         <name>${this.trackName}</name>
         <trkseg>`;
-            this.route.forEach(coord => {
-                gpxData += `
+                this.route.forEach(coord => {
+                    gpxData += `
             <trkpt lat="${coord[0]}" lon="${coord[1]}"></trkpt>`;
-            });
-            gpxData += `
+                });
+                gpxData += `
         </trkseg>
     </trk>
 </gpx>`;
-            const blob = new Blob([gpxData], { type: "application/gpx+xml" });
-            saveAs(blob, `${this.trackName}.gpx`);
-        },
-        loadRoute() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.gpx';
-            input.onchange = async (event) => {
-                const file = event.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const contents = e.target.result;
-                    this.parseGPX(contents);
+                const blob = new Blob([gpxData], { type: "application/gpx+xml" });
+                saveAs(blob, `${this.trackName}.gpx`);
+            },
+            loadRoute() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.gpx';
+                input.onchange = async (event) => {
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const contents = e.target.result;
+                        this.parseGPX(contents);
+                    };
+                    reader.readAsText(file);
                 };
-                reader.readAsText(file);
-            };
-            input.click();
-        },
-        parseGPX(gpxData) {
-            this.loading = true;
-            const parser = new DOMParser();
-            const xmlDoc = parser.parseFromString(gpxData, "application/xml");
-            this.trackName = xmlDoc.getElementsByTagName("name")[0].textContent;
-            const trackPoints = xmlDoc.getElementsByTagName("trkpt");
-            this.route = [];
-            if (this.polyline && !this.joinTracks) {
-                this.map.removeLayer(this.polyline);
-                this.polyline = null;
-            }
-            for (let i = 0; i < trackPoints.length; i++) {
-                const lat = parseFloat(trackPoints[i].getAttribute("lat"));
-                const lon = parseFloat(trackPoints[i].getAttribute("lon"));
-                this.addMarker(lat, lon);
-            }
-            this.redrawRoute();
-            // Обновляем позиционирование карты
-            if (this.route.length > 0) {
-                const bounds = L.latLngBounds(this.route.map(coord => L.latLng(coord[0], coord[1])));
-                this.map.fitBounds(bounds);
-            }
-            this.loading = false;
-        },
-        removeLastPoint() {
-            if (this.route.length > 0) {
-                this.route.pop();
-                if (this.polyline) {
-                    this.polyline.setLatLngs(this.route);
-                    if (this.route.length === 0) {
-                        this.map.removeLayer(this.polyline);
-                        this.polyline = null;
+                input.click();
+            },
+            saveRouteElevation() {
+                if (!this.routesLocation || !this.elevationsLocation) {
+                    this.message("Вам нечего выгружать", false);
+                    return false;
+                }
+                const jsonData = JSON.stringify({ location: this.routesLocation, elevation: this.elevationsLocation, features: this.features });
+                const blob = new Blob([jsonData], { type: "application/json" }, null, 2);
+                saveAs(blob, `${this.trackName}.json`);
+            },
+            loadRouteElevation() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = async (event) => {
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const contents = e.target.result;
+                        try {
+
+                            const jsonData = JSON.parse(contents);
+                            this.routesLocation = jsonData.location;
+                            this.elevationsLocation = jsonData.elevation;
+                            this.features = jsonData.features;
+                            this.updateRoute(jsonData.location);
+                            this.getFeatures();
+
+                            //вот здесь сразу запустить отрисовку
+                        } catch (error) {
+                            this.$refs.notification.notify('Ошибка см. консоль', 'error');
+                            console.log(error);
+                        }
+                    };
+                    reader.readAsText(file);
+                };
+                input.click();
+
+
+            },
+            parseGPX(gpxData) {
+                this.loading = true;
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(gpxData, "application/xml");
+                this.trackName = xmlDoc.getElementsByTagName("name")[0].textContent;
+                const trackPoints = xmlDoc.getElementsByTagName("trkpt");
+                this.route = [];
+                if (this.polyline && !this.joinTracks) {
+                    this.map.removeLayer(this.polyline);
+                    this.polyline = null;
+                }
+                for (let i = 0; i < trackPoints.length; i++) {
+                    const lat = parseFloat(trackPoints[i].getAttribute("lat"));
+                    const lon = parseFloat(trackPoints[i].getAttribute("lon"));
+                    this.addMarker(lat, lon);
+                }
+                this.redrawRoute();
+                // Обновляем позиционирование карты
+                if (this.route.length > 0) {
+                    const bounds = L.latLngBounds(this.route.map(coord => L.latLng(coord[0], coord[1])));
+                    this.map.fitBounds(bounds);
+                }
+                this.loading = false;
+            },
+            removeLastPoint() {
+                if (this.route.length > 0) {
+                    this.route.pop();
+                    const marker = this.markers.pop();
+                    this.map.removeLayer(marker)
+                    this.updateMarkers();
+                    if (this.polyline) {
+                        this.polyline.setLatLngs(this.route);
+                        // if (this.route.length === 0) {
+                        //     this.map.removeLayer(this.polyline);
+                        //     this.polyline = null;
+                        // }
                     }
+                    this.$refs.notification.notify("Последняя точка удалена.", 'succes');
+                } else {
+                    this.$refs.notification.notify("Маршрут пуст!", 'error');
                 }
-                this.$refs.notification.notify("Последняя точка удалена.", 'succes');
-            } else {
-                this.$refs.notification.notify("Маршрут пуст!", 'error');
-            }
-        },
-        removeAllPoints() {
-            if (this.route.length > 0) {
-                this.route = []; // Очищаем массив маршрута
-                if (this.polyline) {
-                    this.polyline.setLatLngs(this.route); // Обновляем полилинию
-                    this.map.removeLayer(this.polyline); // Удаляем полилинию с карты
-                    this.polyline = null; // Сбрасываем ссылку на полилинию
+            },
+            removeAllPoints() {
+                if (this.route.length > 0) {
+                    this.route = []; // Очищаем массив маршрута
+                    if (this.polyline) {
+                        this.polyline.setLatLngs(this.route); // Обновляем полилинию
+                        this.map.removeLayer(this.polyline); // Удаляем полилинию с карты
+                        this.polyline = null; // Сбрасываем ссылку на полилинию
+                    }
+                    this.$refs.notification.notify("Все точки удалены.", 'succes');
+                } else {
+                    this.$refs.notification.notify("Маршрут пуст!", 'error');
                 }
-                this.$refs.notification.notify("Все точки удалены.", 'succes');
-            } else {
-                this.$refs.notification.notify("Маршрут пуст!", 'error');
-            }
-        },
-        removeAllMarkers() {
-            // Проверяем, есть ли маркеры для удаления
-            if (this.markers.length > 0) {
-                // Проходим по всем маркерам и удаляем их с карты
-                this.markers.forEach(marker => {
-                    this.map.removeLayer(marker);
+            },
+            removeAllMarkers() {
+                // Проверяем, есть ли маркеры для удаления
+                if (this.markers.length > 0) {
+                    // Проходим по всем маркерам и удаляем их с карты
+                    this.markers.forEach(marker => {
+                        this.map.removeLayer(marker);
+                    });
+
+                    // Очищаем массив маркеров
+                    this.markers = [];
+                    this.features = [];
+                    this.$refs.notification.notify("Все маркеры удалены.", 'succes');
+                } else {
+                    this.$refs.notification.notify("Нет маркеров для удаления.", 'error');
+                }
+            },
+            
+            updateRoute(data) {
+                //теперь тут два варианта
+                if (!data.features) {
+                    this.updataRouterFromPost(data);
+                    return false;
+                }
+                const route = data.features[0]; // Получаем первый маршрут
+                const decodedRoute = route.geometry.coordinates; // Получаем координаты маршрута
+                // Преобразуем в формат [lat, lon]
+                this.route = decodedRoute.map(coord => [coord[1], coord[0]]); // Обратите внимание на порядок: [lat, lon]
+                this.autotrackPropertys = reactive(data.features[0].properties); // Получаем данные о маршруте
+                // Получаем и рисуем данные по высоте
+                this.getElevationData();
+                this.getFeatures();
+                // Отрисовка маршрута на карте
+                this.redrawRoute();
+            },
+            updataRouterFromPost(data){
+                const encodedString = data.routes[0].geometry;
+                const decodedCoordinates = polyline.decode(encodedString);//L.Polyline.fromEncoded(encodedString).getLatLngs();
+
+                // Преобразуем в формат [lat, lon]
+                this.route = decodedCoordinates.map(coord => [coord[1], coord[0]]); // Обратите внимание на порядок: [lat, lon]
+                //this.autotrackPropertys = reactive(data.features[0].properties); // Получаем данные о маршруте
+                // Получаем и рисуем данные по высоте
+                // this.getElevationData();
+                // this.getFeatures();
+                // Отрисовка маршрута на карте
+                this.redrawRoute();
+            },
+            updateElevations(data) {
+                this.elevations = data.results.map(result => result.elevation);
+                this.plotElevationProfile();
+            },
+
+            setMarkerForFeatures() {
+                if (!this.features || !this.features.length) {
+                    return false;
+                }
+                this.features.forEach(feature => {
+                    // Извлекаем координаты
+                    const coordinates = feature.geometry.coordinates;
+                    const lat = coordinates[1]; // Широта
+                    const lon = coordinates[0];  // Долгота
+
+
+                    // Собираем данные для всплывающего окна
+                    let popupContent = '';
+                    if (feature.properties.osm_tags) {
+                        popupContent = feature.properties.osm_tags.name;
+                    }
+                    else if (feature.properties.category_ids) {
+                        const categories = Object.values(feature.properties.category_ids);
+
+                        categories.forEach(category => {
+                            if (category.category_group && category.category_name) {
+                                popupContent += `
+                    <strong>${category.category_group}</strong>: ${category.category_name}<br>
+                `;
+                            }
+                        });
+                    }
+
+                    const icon = { icon: icons.defaultIcon };
+                    if (feature.properties.category_ids["103"]) {
+                        icon.icon = icons.tentIcon;
+                    }
+                    if (feature.properties.category_ids["627"]) {
+                        icon.icon = icons.starIcon;
+                    }
+                    if (feature.properties.category_ids["336"] || feature.properties.category_ids["335"]) {
+                        icon.icon = icons.rockIcon;
+                    }
+                    if (feature.properties.category_ids["340"] || feature.properties.category_ids["338"]) {
+                        icon.icon = icons.springIcon;
+                    }
+
+
+                    // Создаем маркерd raggable: true,
+                    const marker = L.marker([lat, lon], icon).addTo(this.map);
+                    //const marker = L.marker([lat, lon], this.markerOptions).addTo(this.map);
+                    this.markers.push(marker);
+
+
+
+                    // Привязываем всплывающее окно к маркеру
+                    marker.bindPopup(popupContent).openPopup();
                 });
 
-                // Очищаем массив маркеров
-                this.markers = [];
-                this.$refs.notification.notify("Все маркеры удалены.", 'succes');
-            } else {
-                this.$refs.notification.notify("Нет маркеров для удаления.", 'error');
-            }
-        },
-        getRouteOpenroute(start, end, mode = 'foot-walking') {
-            this.loading = true;
 
-            // Формируем URL для OpenRouteService API
-            const apiKey = '5b3ce3597851110001cf624807c4aca3606842eda3cbb1e7dc01066b'; // Замените на ваш ключ API OpenRouteService
-            const url = `https://api.openrouteservice.org/v2/directions/${mode}?start=${start.lon},${start.lat}&end=${end.lon},${end.lat}`;
-
-            axios.get(url, {
-                headers: {
-                    'Authorization': apiKey,
-                    'Content-Type': 'application/json'
+            },
+            getFeatures() {
+                console.log('this.features', this.features);
+                if (this.features && this.features.length > 0) {
+                    this.setMarkerForFeatures();
+                    return false;
                 }
-            })
-                .then(response => {
-                    // Проверяем наличие маршрута
-                    if (response.data.features.length > 0) {
-                        const route = response.data.features[0]; // Получаем первый маршрут
-                        const decodedRoute = route.geometry.coordinates; // Получаем координаты маршрута
-                        // Преобразуем в формат [lat, lon]
-                        this.route = decodedRoute.map(coord => [coord[1], coord[0]]); // Обратите внимание на порядок: [lat, lon]
-                        this.autotrackPropertys = response.data.features[0].properties; // Получаем данные о маршруте
+                //The pattern for this bbox string is [[minlon,minlat],[maxlon,maxlat]]
+                this.loading = true;
+                // Формируем URL для OpenRouteService API
+                const apiKey = '5b3ce3597851110001cf624807c4aca3606842eda3cbb1e7dc01066b'; // Замените на ваш ключ API OpenRouteService
+                const url = `https://api.openrouteservice.org/pois`;
 
-                        // Получаем и рисуем данные о высоте пока не рисуем
-                        this.getElevationData(this.route);
-                        // Отрисовка маршрута на карте
-                        this.redrawRoute();
-                    } else {
-                        console.error("Маршрут не найден или ошибка в запросе");
+
+                let ddox = [];
+                let geojson = {
+                    type: "Point",
+                    coordinates: []
+                };
+                if (this.routesLocation.bbox) {
+                    console.log('this.routesLocation.features.bbox', this.routesLocation.bbox);
+                    const bbox = this.routesLocation.bbox;
+                    ddox = [
+                        [bbox[0], bbox[1]], // [minLat, minLon]
+                        [bbox[2], bbox[3]]  // [maxLat, maxLon]
+                    ];
+                    geojson.coordinates = [bbox[0], bbox[1]];
+                } else {
+                    const box = this.route[this.route.length - 1];
+                    ddox = [
+                        [this.route[0][1], this.route[0][0]], // [minLat, minLon]
+                        [box[1], box[0]]  // [maxLat, maxLon]
+                    ];
+                    geojson.coordinates = [this.route[0][1], this.route[0][0]];
+
+                }
+
+
+                axios.post(url, {
+                    request: "pois",
+                    geometry: {
+                        bbox: ddox,
+                        //  geojson,
+                        buffer: 200
                     }
-                })
-                .catch(error => {
-                    this.addNotification("Ошибка при получении маршрута:", 'error');
-                    console.error("Ошибка при получении маршрута:", error);
-                })
-                .finally(() => {
-                    this.loading = false;
-                });
-        },
-
-        getElevationData(coordinates) { //запрос высот по координатам
-            const elevationUrl = `https://api.open-elevation.com/api/v1/lookup`;
-
-            // Формируем массив запросов к API высоты
-            const requests = coordinates.map(coord => ({
-                latitude: coord[0],
-                longitude: coord[1]
-            }));
-
-            axios.post(elevationUrl, { locations: requests },
-                {
+                }, {
                     headers: {
-                        'Accept': 'application/json',
+                        'Authorization': apiKey,
                         'Content-Type': 'application/json'
                     }
                 }
-            )
-                .then(response => {
-                    this.elevations = response.data.results.map(result => result.elevation);
-                    this.plotElevationProfile(coordinates);
-                })
-                .catch(error => {
-                    console.error("Ошибка при получении данных о высоте:", error);
+                )
+                    .then(response => {
+                        this.features = response.data.features;
+                        this.setMarkerForFeatures();
+                    })
+                    .catch(error => {
+                        this.message("Ошибка при получении достопримечательностей:", false);
+                        console.error("Ошибка при получении маршрута:", error);
+                    })
+                    .finally(() => {
+                        this.loading = false;
+                    });
+            },
+
+            getElevationData() { //запрос высот по координатам
+                if (this.elevationsLocation.results) {
+                    this.updateElevations(this.elevationsLocation);
+                    return false;
+                }
+                const coordinates = this.route;
+                const elevationUrl = `https://api.open-elevation.com/api/v1/lookup`;
+
+                // Формируем массив запросов к API высоты
+                const requests = coordinates.map(coord => ({
+                    latitude: coord[0],
+                    longitude: coord[1]
+                }));
+
+
+
+                axios.post(elevationUrl, { locations: requests },
+                    {
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                )
+                    .then(response => {
+                        this.elevationsLocation = response.data;
+                        this.updateElevations(response.data);
+                    })
+                    .catch(error => {
+                        console.error("Ошибка при получении данных о высоте:", error);
+                    });
+            },
+            highlightRoutePoint(point) {
+                console.log('point', point);
+                //point.setStyle({ color: 'red', radius: 10 }); // Пример изменения стиля
+
+            },
+            unhighlightRoutePoint(point) {
+                console.log('point ---', point);
+                // point.setStyle({ color: 'blue', radius: 5 });
+
+            },
+            plotElevationProfile() {  ///подготовка к постороению графика высот
+                console.log('this.routesLocation', this.routesLocation);
+                if (this.routesLocation && this.routesLocation.features && this.routesLocation.features[0].properties.segments[0].steps.length) {
+                    const points = this.calculateDistancesAndTimes();
+                    console.log('points', points);
+                    if (points.length > 0) {
+                        this.elevationData = points;
+                    }
+                }
+                else {
+                    this.elevationData = this.route.map((coord, index) => ({
+                        x: index,
+                        y: this.elevations[index] // Высота по индексу
+                    }));
+                }
+
+
+
+
+            },
+            calculateDistancesAndTimes() {
+                // if (this.routesLocation.length === 0) {
+                //     return false;
+                // }
+                const data = [];
+                let currentDistance = 0;
+                let currentDuration = 0;
+
+                this.routesLocation.features[0].properties.segments[0].steps.forEach(step => {
+                    const segmentDistance = step.distance / (step.way_points[1] - step.way_points[0]);
+                    const segmentDuration = step.duration / (step.way_points[1] - step.way_points[0]);
+
+                    for (let i = step.way_points[0]; i < step.way_points[1]; i++) {
+                        currentDistance += segmentDistance;
+                        currentDuration += segmentDuration;
+
+                        data.push({
+                            x: i,
+                            y: this.elevations[i],
+                            distance: this.getDistance(currentDistance),
+                            duration: this.getDuration(currentDuration),
+                        });
+                    }
                 });
-        },
-        highlightRoutePoint(point) {
-            console.log('point', point);
-            //point.setStyle({ color: 'red', radius: 10 }); // Пример изменения стиля
-
-        },
-        unhighlightRoutePoint(point) {
-            console.log('point ---', point);
-            // point.setStyle({ color: 'blue', radius: 5 });
-
-        },
-        plotElevationProfile(coordinates) {  ///подготовка к постороению графика высот
-            ///пока не работает
-            const chartData = coordinates.map((coord, index) => ({
-                x: index,
-                y: this.elevations[index] // Высота по индексу
-            }));
-
-            // Проверяем, есть ли данные для графика
-            if (chartData.length === 0) {
-                console.warn('Нет данных для построения графика высот.');
-                return; // Выходим из функции, если данные отсутствуют
-            }
-
-            this.chart.xAxis[0].setCategories(coordinates.map((_, index) => `${index + 1}`), false); // Обновляем категории
-            this.chart.series[0].setData(chartData, true); // Обновляем данные и перерисовываем график
-
-
-        }
-    },
-    watch: {
-        selectedMode(newselectMode) {
-            if (this.route) {
-                const pointA = { lat: this.route[0][0], lon: this.route[0][1] }; // Первая точка
-                const pointB = { lat: this.route[this.route.length - 1][0], lon: this.route[this.route.length - 1][1] }; // Вторая точка
-                this.getRouteOpenroute(pointA, pointB, newselectMode);
-
-            }
-
-        },
-        selectedlayer(newLayer) {
-            // Удаляем предыдущий слой, если он существует
-            if (this.currentLayer) {
-                this.map.removeLayer(this.currentLayer);
-            }
-
-
-            // Создаём новый слой и добавляем его на карту
-            this.currentLayer = L.tileLayer(newLayer.path, {
-                maxZoom: 17,
-                attribution: `&copy; <a href="https://${newLayer.label}/copyright">${newLayer.label}</a> contributors`,
-            }).addTo(this.map);
-
-
-        },
-        coords(newCoords) {
-            if (this.map) {
-                this.map.setView(newCoords, 17);
-                L.marker(newCoords, this.markerOptions).addTo(this.map).bindPopup(`Координаты: ${newCoords[0]}, ${newCoords[1]}`).openPopup();
+                return data;
             }
         },
-    },
-};
+        watch: {
+            selectedlayer(newLayer) {
+                // Удаляем предыдущий слой, если он существует
+                if (this.currentLayer) {
+                    this.map.removeLayer(this.currentLayer);
+                }
+
+                // Создаём новый слой и добавляем его на карту
+                this.currentLayer = L.tileLayer(newLayer.path, {
+                    maxZoom: 17,
+                    attribution: `&copy; <a href="https://${newLayer.label}/copyright">${newLayer.label}</a> contributors`,
+                }).addTo(this.map);
+
+                this.updateMarkers();
+                // // Удаляем старые маркеры
+                // this.markers.forEach(marker => {
+                //     this.map.removeLayer(marker);
+                // });
+
+                // // Повторно добавляем все маркеры
+                // this.markers.forEach(marker => {
+                //     marker.addTo(this.map);
+                // });
+
+
+            },
+            coords(newCoords) {
+                if (this.map) {
+                    this.map.setView(newCoords, 17);
+                    L.marker(newCoords, this.markerOptions).addTo(this.map).bindPopup(`Координаты: ${newCoords[0]}, ${newCoords[1]}`).openPopup();
+                }
+            },
+
+        },
+    };
 </script>
 
 <style>
-.leaflet-bottom.leaflet-right {
-    opacity: 0;
-}
-.highcharts-credits{
-    opacity: 0;
-}
+    .custom-icon {
+        fill: #FF9800;
+    }
+
+    .leaflet-bottom.leaflet-right {
+        opacity: 0;
+    }
+
+    .leaflet-top {
+        top: 80px !important;
+        z-index: 400;
+    }
 </style>
 <style scoped>
-.dialogformap {
-    height: calc(100vh - 140px);
-}
+    .dialogformap {
+        height: calc(100vh - 50px);
+    }
 
-.loading-spinner {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
+    .loading-spinner {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
 
 
-.settings-panel {
-    position: absolute;
-    right: 30px;
-    max-width: 360px;
-    z-index: 1000;
-    /* Установите нужный z-index */
-    background-color: white;
-    /* Добавьте фон, если необходимо */
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    /* Добавьте тень для лучшего визуального эффекта */
-    padding: 16px;
-    /* Добавьте отступы, если необходимо */
-}
-.elevations{
-    position:absolute;
-    bottom: 0;
-    z-index: 2000;
-    height: 200px;
-}
+    .settings-panel {
+        position: absolute;
+        top: 20px;
+        right: 0;
+        max-width: 380px;
+        /* max-width: 360px; */
+        z-index: 1000;
+        /* Установите нужный z-index */
+        background-color: rgb(255, 255, 255);
+        /* Добавьте фон, если необходимо */
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        /* Добавьте тень для лучшего визуального эффекта */
+        padding: 16px;
+        /* Добавьте отступы, если необходимо */
+        font-size: 0.8rem;
+    }
+
+    @media (max-width: 600px) {
+        .settings-panel {
+            width: 100%;
+            /* Устанавливаем ширину 100% для маленьких экранов */
+            right: 0;
+            /* Убедитесь, что панель остается справа */
+        }
+    }
 </style>

@@ -9,7 +9,7 @@
         name: 'SelectLayer',
         data() {
             return {
-                selectedLayer: { label: 'openstreetmap', path: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' },
+                selectedLayer: { label: 'Opentopomap', path: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png'  },
                 mapsLayerPath: {
                     openstreetmap: { label: 'openstreetmap', path: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' },
                     opentopomap: { label: 'Opentopomap', path: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png' },

@@ -12,9 +12,8 @@
             </template>
 
 
-            <v-card>
-                <!-- <v-card-title> -->
-                <v-card-text class="pt-0">
+            <v-card class="px-0">
+                <v-card-text class="pt-0 pa-0">
                     <div v-if="$vuetify.display.xs">
                         <div class="d-flex align-center">
 
@@ -26,17 +25,17 @@
                         </div>
                     </div>
                     <div class="d-flex align-center" v-else>
-                        <span class="text-wrap">Выберите точку на карте для которой хотите получить погоду или постройте
+                        <span class="text-wrap pl-4">  Выберите точку на карте для которой хотите получить погоду или постройте
                             маршрут</span>
                         <v-spacer></v-spacer>
                         <v-btn icon flat @click="dialog = false"><v-icon>mdi-close</v-icon></v-btn>
                     </div>
                     <MapComponent @updateCoords="updateCoords" :coords="getCoords" :layer="getlayer" />
-                    <!-- </v-card-title> -->
                 </v-card-text>
 
 
             </v-card>
+
         </v-dialog>
 
     </div>
@@ -45,42 +44,42 @@
 
 
 <script>
-import MapComponent from './MapComponent.vue';
-export default {
-    name: 'DialogForMap',
-    components: {
-        MapComponent
-    },
-    props: {
-        coords: {
-            type: Array,
-            default: () => [45.04886, 41.95639], // Значение по умолчанию
+    import MapComponent from './MapComponent.vue';
+    export default {
+        name: 'DialogForMap',
+        components: {
+            MapComponent
         },
-        layer: {
-            type: String,
-            default: () => 'openstreetmap', // Значение по умолчанию                
+        props: {
+            coords: {
+                type: Array,
+                default: () => [45.04886, 41.95639], // Значение по умолчанию
+            },
+            layer: {
+                type: String,
+                default: () => 'openstreetmap', // Значение по умолчанию                
+            },
         },
-    },
-    data() {
-        return {
-            dialog: false,
-            tracks: false,
-        }
-    },
-    computed: {
-        getCoords() {
-            return this.coords;
+        data() {
+            return {
+                dialog: false,
+                tracks: false,
+            }
         },
-        getlayer() {
-            return this.layer;
+        computed: {
+            getCoords() {
+                return this.coords;
+            },
+            getlayer() {
+                return this.layer;
+            },
         },
-    },
-    methods: {
-        updateCoords(coords) {
-            this.$emit('updateCoords', coords);
-            this.dialog = false;
-        },
+        methods: {
+            updateCoords(coords) {
+                this.$emit('updateCoords', coords);
+                this.dialog = false;
+            },
 
-    },
-}
+        },
+    }
 </script>
