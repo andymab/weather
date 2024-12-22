@@ -1,0 +1,423 @@
+{
+    "bbox": [
+        39.30346,
+        44.17244,
+        39.330887,
+        44.193686
+    ],
+    "routes": [
+        {
+            "summary": {
+                "distance": 4712.9,
+                "duration": 3393.3
+            },
+            "segments": [
+                {
+                    "distance": 532.1,
+                    "duration": 383.1,
+                    "steps": [
+                        {
+                            "distance": 127.9,
+                            "duration": 92.1,
+                            "type": 11,
+                            "instruction": "Head northwest on По Двубратскому каньону",
+                            "name": "По Двубратскому каньону",
+                            "way_points": [
+                                0,
+                                7
+                            ]
+                        },
+                        {
+                            "distance": 375.9,
+                            "duration": 270.7,
+                            "type": 2,
+                            "instruction": "Turn sharp left onto По Двубратскому каньону",
+                            "name": "По Двубратскому каньону",
+                            "way_points": [
+                                7,
+                                25
+                            ]
+                        },
+                        {
+                            "distance": 28.3,
+                            "duration": 20.3,
+                            "type": 4,
+                            "instruction": "Turn slight left onto Опасный участок",
+                            "name": "Опасный участок",
+                            "way_points": [
+                                25,
+                                27
+                            ]
+                        },
+                        {
+                            "distance": 0,
+                            "duration": 0,
+                            "type": 10,
+                            "instruction": "Arrive at Опасный участок, on the left",
+                            "name": "-",
+                            "way_points": [
+                                27,
+                                27
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "distance": 241.4,
+                    "duration": 173.8,
+                    "steps": [
+                        {
+                            "distance": 224.7,
+                            "duration": 161.8,
+                            "type": 11,
+                            "instruction": "Head northwest on Опасный участок",
+                            "name": "Опасный участок",
+                            "way_points": [
+                                27,
+                                36
+                            ]
+                        },
+                        {
+                            "distance": 16.7,
+                            "duration": 12,
+                            "type": 0,
+                            "instruction": "Turn left onto Тропа через Каньон",
+                            "name": "Тропа через Каньон",
+                            "way_points": [
+                                36,
+                                37
+                            ]
+                        },
+                        {
+                            "distance": 0,
+                            "duration": 0,
+                            "type": 10,
+                            "instruction": "Arrive at Тропа через Каньон, on the left",
+                            "name": "-",
+                            "way_points": [
+                                37,
+                                37
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "distance": 181.2,
+                    "duration": 130.5,
+                    "steps": [
+                        {
+                            "distance": 181.2,
+                            "duration": 130.5,
+                            "type": 11,
+                            "instruction": "Head west on Тропа через Каньон",
+                            "name": "Тропа через Каньон",
+                            "way_points": [
+                                37,
+                                42
+                            ]
+                        },
+                        {
+                            "distance": 0,
+                            "duration": 0,
+                            "type": 10,
+                            "instruction": "Arrive at Тропа через Каньон, on the left",
+                            "name": "-",
+                            "way_points": [
+                                42,
+                                42
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "distance": 418.7,
+                    "duration": 301.5,
+                    "steps": [
+                        {
+                            "distance": 418.7,
+                            "duration": 301.5,
+                            "type": 11,
+                            "instruction": "Head southwest on Тропа через Каньон",
+                            "name": "Тропа через Каньон",
+                            "way_points": [
+                                42,
+                                52
+                            ]
+                        },
+                        {
+                            "distance": 0,
+                            "duration": 0,
+                            "type": 10,
+                            "instruction": "Arrive at Тропа через Каньон, on the right",
+                            "name": "-",
+                            "way_points": [
+                                52,
+                                52
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "distance": 588.5,
+                    "duration": 423.7,
+                    "steps": [
+                        {
+                            "distance": 98,
+                            "duration": 70.6,
+                            "type": 11,
+                            "instruction": "Head south on Тропа через Каньон",
+                            "name": "Тропа через Каньон",
+                            "way_points": [
+                                52,
+                                53
+                            ]
+                        },
+                        {
+                            "distance": 103.7,
+                            "duration": 74.6,
+                            "type": 3,
+                            "instruction": "Turn sharp right onto спуск в каньон сложный",
+                            "name": "спуск в каньон сложный",
+                            "way_points": [
+                                53,
+                                57
+                            ]
+                        },
+                        {
+                            "distance": 160.4,
+                            "duration": 115.5,
+                            "type": 0,
+                            "instruction": "Turn left onto По Двубратскому каньону",
+                            "name": "По Двубратскому каньону",
+                            "way_points": [
+                                57,
+                                62
+                            ]
+                        },
+                        {
+                            "distance": 226.4,
+                            "duration": 163,
+                            "type": 5,
+                            "instruction": "Turn slight right onto По Двубратскому каньону",
+                            "name": "По Двубратскому каньону",
+                            "way_points": [
+                                62,
+                                73
+                            ]
+                        },
+                        {
+                            "distance": 0,
+                            "duration": 0,
+                            "type": 10,
+                            "instruction": "Arrive at По Двубратскому каньону, on the left",
+                            "name": "-",
+                            "way_points": [
+                                73,
+                                73
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "distance": 2751,
+                    "duration": 1980.7,
+                    "steps": [
+                        {
+                            "distance": 14,
+                            "duration": 10.1,
+                            "type": 11,
+                            "instruction": "Head southwest on По Двубратскому каньону",
+                            "name": "По Двубратскому каньону",
+                            "way_points": [
+                                73,
+                                74
+                            ]
+                        },
+                        {
+                            "distance": 18.5,
+                            "duration": 13.3,
+                            "type": 4,
+                            "instruction": "Turn slight left onto По Двубратскому каньону",
+                            "name": "По Двубратскому каньону",
+                            "way_points": [
+                                74,
+                                75
+                            ]
+                        },
+                        {
+                            "distance": 210.2,
+                            "duration": 151.4,
+                            "type": 1,
+                            "instruction": "Turn right onto По Двубратскому каньону",
+                            "name": "По Двубратскому каньону",
+                            "way_points": [
+                                75,
+                                86
+                            ]
+                        },
+                        {
+                            "distance": 527.3,
+                            "duration": 379.6,
+                            "type": 1,
+                            "instruction": "Turn right",
+                            "name": "-",
+                            "way_points": [
+                                86,
+                                93
+                            ]
+                        },
+                        {
+                            "distance": 213.3,
+                            "duration": 153.6,
+                            "type": 1,
+                            "instruction": "Turn right",
+                            "name": "-",
+                            "way_points": [
+                                93,
+                                95
+                            ]
+                        },
+                        {
+                            "distance": 345.5,
+                            "duration": 248.8,
+                            "type": 0,
+                            "instruction": "Turn left",
+                            "name": "-",
+                            "way_points": [
+                                95,
+                                100
+                            ]
+                        },
+                        {
+                            "distance": 1239.1,
+                            "duration": 892.2,
+                            "type": 1,
+                            "instruction": "Turn right",
+                            "name": "-",
+                            "way_points": [
+                                100,
+                                147
+                            ]
+                        },
+                        {
+                            "distance": 31.4,
+                            "duration": 22.6,
+                            "type": 4,
+                            "instruction": "Turn slight left onto Анастасиевские поляны - г. Семашхо",
+                            "name": "Анастасиевские поляны - г. Семашхо",
+                            "way_points": [
+                                147,
+                                149
+                            ]
+                        },
+                        {
+                            "distance": 95,
+                            "duration": 68.4,
+                            "type": 0,
+                            "instruction": "Turn left",
+                            "name": "-",
+                            "way_points": [
+                                149,
+                                152
+                            ]
+                        },
+                        {
+                            "distance": 23.2,
+                            "duration": 16.7,
+                            "type": 3,
+                            "instruction": "Turn sharp right",
+                            "name": "-",
+                            "way_points": [
+                                152,
+                                154
+                            ]
+                        },
+                        {
+                            "distance": 33.5,
+                            "duration": 24.1,
+                            "type": 2,
+                            "instruction": "Turn sharp left",
+                            "name": "-",
+                            "way_points": [
+                                154,
+                                157
+                            ]
+                        },
+                        {
+                            "distance": 0,
+                            "duration": 0,
+                            "type": 10,
+                            "instruction": "Arrive at your destination, on the left",
+                            "name": "-",
+                            "way_points": [
+                                157,
+                                157
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "bbox": [
+                39.30346,
+                44.17244,
+                39.330887,
+                44.193686
+            ],
+            "geometry": "ihvlGay`oFMXCb@T^Pv@Bp@I\\m@HRZB^w@h@KXKd@\\LTR\\?Nj@@b@An@DfAZz@T\\\\tAEbBKF_@VYl@EBWNW\\Mh@y@~@]v@iApBQd@QXQDADY`BEjATjCF|ABFbAnC\\n@b@zCpAfBr@v@Pn@LlAr@|BJTJAfDk@Mz@s@l@g@NYh@Pv@~@\\p@B`A{@f@b@Jn@XVj@hCL`A@Jb@h@DJX~@a@PDZBBTP`@E@b@?LX`@TTVBNIL_@LeBlA?`@DPWvCvCFr@NjA\\l@hApGbEfAhEmAtFnFc@hBxB`FlBhAlCk@|@dAbAc@JLl@lAXZ@`@^tCFt@TrAVt@Zl@v@h@JR`@RRILJj@fBl@~@V|@f@@X[N_@z@cAb@W|@FhAALG\\BPRVJVVLd@?|CE\\@b@Ab@v@G\\Bb@O`ADdASl@Sh@[v@gA`BeAp@Qb@U|@MZALEf@GFYX}@~@iBANKf@TBH^?P",
+            "way_points": [
+                0,
+                27,
+                37,
+                42,
+                52,
+                73,
+                157
+            ]
+        }
+    ],
+    "metadata": {
+        "attribution": "openrouteservice.org | OpenStreetMap contributors",
+        "service": "routing",
+        "timestamp": 1734881145484,
+        "query": {
+            "coordinates": [
+                [
+                    39.3308186531067,
+                    44.19211291855918
+                ],
+                [
+                    39.325604438781745,
+                    44.19203599204962
+                ],
+                [
+                    39.32390928268433,
+                    44.1935283484142
+                ],
+                [
+                    39.32182788848878,
+                    44.1935283484142
+                ],
+                [
+                    39.317879676818855,
+                    44.19163597258115
+                ],
+                [
+                    39.31474685668946,
+                    44.189543518808975
+                ],
+                [
+                    39.30528402328491,
+                    44.17238567384928
+                ]
+            ],
+            "profile": "foot-walking",
+            "profileName": "foot-walking",
+            "format": "json"
+        },
+        "engine": {
+            "version": "9.0.0",
+            "build_date": "2024-12-02T11:09:21Z",
+            "graph_date": "2024-12-10T12:58:38Z"
+        }
+    }
+}
