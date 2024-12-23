@@ -1,9 +1,9 @@
 <template>
     <div>
-        <div  class="my-2">
+        <div  class="my-2" v-if="textdistance">
             <v-alert :text="textdistance" type="info"></v-alert>
         </div>
-        <div  class="mb-2">
+        <div  class="mb-2" v-if="textelevation">
             <v-alert :text="textelevation" type="warning"></v-alert>
         </div>
         <div ref="containerheights" class="elevations"> </div>

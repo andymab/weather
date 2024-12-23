@@ -17,10 +17,10 @@ vue
 
         <div v-if="panelVisible" class="settings-panel">
             <!-- <v-card width="360px"> -->
-            <v-tabs v-model="tab" background-color="transparent" class="pa-0 ma-0">
-                <v-tab value="layer"> {{ $vuetify.display.xs ? 'Слой' : 'Слой карты' }} </v-tab>
-                <v-tab value="custom-track"> Маршрут </v-tab>
-                <v-tab value="elevations"> Высоты </v-tab>
+            <v-tabs v-model="tab" background-color="transparent" class="pa-0 ma-0 ">
+                <v-tab value="layer" class="tabs-layer-item"> {{ $vuetify.display.xs ? 'Слой' : 'Слой' }} </v-tab>
+                <v-tab value="custom-track" class="tabs-layer-item">Маршрут</v-tab>
+                <v-tab value="elevations" class="tabs-layer-item">Высоты</v-tab>
 
             </v-tabs>
 
@@ -87,8 +87,7 @@ vue
                 </v-tabs-window-item>
                 <v-tabs-window-item value="elevations">
                     <ElevationChart :elevationData="elevationData" :route="route" @addTrackMarker="addTrackMarker"
-                        :textdistance="`${distance} ${times} ${calculateAverageSpeed}`"
-                        :textelevation="calculateElevation" />
+                        :textdistance="infoForDistance" :textelevation="calculateElevation" />
                 </v-tabs-window-item>
             </v-tabs-window>
             <!-- </v-card> -->
@@ -233,7 +232,13 @@ export default {
                 const elevationDifference = maxElevation - minElevation;
                 return `${elevationDifference}м : ${minElevation} - ${maxElevation}м  `;
             }
-        }
+        },
+        infoForDistance() {
+            if (this.distance && this.times && this.calculateAverageSpeed) {
+                return `${this.distance} ${this.times} ${this.calculateAverageSpeed}`;
+            }
+              return false;
+         }
     },
     mounted() {
         this.initializeMap();
@@ -354,8 +359,10 @@ export default {
         },
         selectMode(mode) {
             this.selectedMode = mode;
+            this.features = [];
+            this.elevationsLocation = [];
 
-            if (this.markers.length > 2) {
+            if (this.markers.length > 1) {
                 const coordinatesArray = this.markers.map(marker => {
                     const latLng = marker.getLatLng(); // Получаем координаты маркера
                     return [latLng.lng, latLng.lat]; // Возвращаем массив с координатами
@@ -379,11 +386,12 @@ export default {
         },
         async getRouteOpenroutePOST(coordinates, mode = 'foot-walking') {
             //только для теста
-            const response = await fetch(`/post.json`);
-            const result = await response.json();
-            this.updateRoute(result);
-            return false;
-            //только для теста
+            // const response = await fetch(`/post.json`);
+            // const result = await response.json();
+            // this.routesLocation = result;
+            // this.updateRoute(result);
+            // return false;
+            // //только для теста
             this.loading = true;
             // Формируем URL для OpenRouteService API
             const apiKey = '5b3ce3597851110001cf624807c4aca3606842eda3cbb1e7dc01066b'; // Замените на ваш ключ API OpenRouteService
@@ -664,14 +672,11 @@ export default {
             const encodedString = data.routes[0].geometry;
             const decodedCoordinates = polyline.decode(encodedString);
             this.route = decodedCoordinates.map(coord => [coord[0], coord[1]]); // Обратите внимание на порядок: [lat, lon]
+            this.autotrackPropertys = reactive(data.routes[0]); // путь пройденый время
             this.redrawRoute(); //рисуем путь уже хорошо
-            this.getFeatures();
-            //this.autotrackPropertys = reactive(data.features[0].properties); // Получаем данные о маршруте
-            // Получаем и рисуем данные по высоте
-            // this.getElevationData();
 
-            // Отрисовка маршрута на карте
-
+            this.getFeatures(); //получение достопримечательностей
+            this.getElevationData();//получение высот
 
         },
         updateElevations(data) {
@@ -724,7 +729,7 @@ export default {
 
                 // Создаем маркерd raggable: true,
                 const marker = L.marker([lat, lon], icon).addTo(toRaw(this.map));
-                
+
                 //const marker = L.marker([lat, lon], this.markerOptions).addTo(this.map);
                 this.markers.push(marker);
 
@@ -799,7 +804,6 @@ export default {
                     this.loading = false;
                 });
         },
-
         getElevationData() { //запрос высот по координатам
             if (this.elevationsLocation.results) {
                 this.updateElevations(this.elevationsLocation);
@@ -844,7 +848,7 @@ export default {
         },
         plotElevationProfile() {  ///подготовка к постороению графика высот
             console.log('this.routesLocation', this.routesLocation);
-            if (this.routesLocation && this.routesLocation.features && this.routesLocation.features[0].properties.segments[0].steps.length) {
+            if (this.routesLocation && (this.routesLocation.features || this.routesLocation.routes)) {
                 const points = this.calculateDistancesAndTimes();
                 console.log('points', points);
                 if (points.length > 0) {
@@ -862,10 +866,48 @@ export default {
 
 
         },
+
+        calculateDistancesAndTimesPOST() {
+            const data = [];
+            let currentDistance = 0;
+            let currentDuration = 0;
+
+            if (this.routesLocation.routes.length > 0) {
+                const route = this.routesLocation.routes[0];
+
+                // Проходим по всем сегментам в маршруте
+                route.segments.forEach(segment => {
+                    // Проходим по всем шагам в текущем сегменте
+                    segment.steps.forEach(step => {
+                        const segmentDistance = step.distance / (step.way_points[1] - step.way_points[0]);
+                        const segmentDuration = step.duration / (step.way_points[1] - step.way_points[0]);
+
+                        // Проходим по всем точкам пути в шаге
+                        for (let i = step.way_points[0]; i < step.way_points[1]; i++) {
+                            currentDistance += segmentDistance;
+                            currentDuration += segmentDuration;
+
+                            data.push({
+                                x: i,
+                                y: this.elevations[i],
+                                distance: this.getDistance(currentDistance),
+                                duration: this.getDuration(currentDuration),
+                            });
+                        }
+                    });
+                });
+            }
+            return data;
+        },
         calculateDistancesAndTimes() {
-            // if (this.routesLocation.length === 0) {
-            //     return false;
-            // }
+            if (this.routesLocation.length === 0) {
+                return false;
+            }
+
+            if (this.routesLocation.routes) {
+                return this.calculateDistancesAndTimesPOST();
+            }
+
             const data = [];
             let currentDistance = 0;
             let currentDuration = 0;
@@ -957,7 +999,7 @@ export default {
     position: absolute;
     top: 20px;
     right: 0;
-    max-width: 380px;
+    width: 380px;
     /* max-width: 360px; */
     z-index: 1000;
     /* Установите нужный z-index */
@@ -967,6 +1009,10 @@ export default {
     /* Добавьте тень для лучшего визуального эффекта */
     padding: 16px;
     /* Добавьте отступы, если необходимо */
+    font-size: 0.8rem;
+}
+
+.tabs-layer-item {
     font-size: 0.8rem;
 }
 
