@@ -67,16 +67,14 @@ vue
 
                     <div class="d-flex justify-space-around">
                         <div class="d-flex">
-                            <v-icon size="x-large" @click="loadRoute" v-tooltip.bottom="`Загрузить маршрут (.GPX)`"
+                            <v-icon size="x-large" @click="loadRouteGPX" v-tooltip.bottom="`Загрузить маршрут (.GPX)`"
                                 class="ma-2 text-teal-lighten-3">mdi-briefcase-upload-outline</v-icon>
-                            <v-icon size="x-large" @click="openDialogFileName(('saveRoute'))"
+                            <v-icon size="x-large" @click="openDialogFileName(('saveRouteGPX'))"
                                 v-tooltip.bottom="`Сохранить маршрут (.GPX)`"
                                 class="ma-2 text-teal-lighten-3">mdi-briefcase-download-outline</v-icon>
 
                         </div>
                         <div class="d-flex">
-                            <!-- <v-text-field v-model="trackName" label="Название маршрута" class="" variant="outlined"
-                            hide-details="auto" density="compact"></v-text-field> -->
                             <v-icon size="x-large" @click="loadRouteElevation" v-tooltip.bottom="`c высотами  (.JSON)`"
                                 class="ma-2 text-teal-lighten-3">mdi-tray-arrow-up</v-icon>
                             <v-icon size="x-large" @click="openDialogFileName('saveRouteElevation')"
@@ -330,8 +328,8 @@ export default {
         },
         executeSave() {
             if (this.trackName && this.saveFunction) {
-                if (this.saveFunction === 'saveRoute') {
-                    this.saveRoute();
+                if (this.saveFunction === 'saveRouteGPX') {
+                    this.saveRouteGPX();
                 } else if (this.saveFunction === 'saveRouteElevation') {
                     this.saveRouteElevation();
                 }
@@ -500,7 +498,7 @@ export default {
             //     }
             // });
         },
-        saveRoute() {
+        saveRouteGPX() {
             if (this.route.length === 0) {
                 alert("Маршрут пуст!");
                 return;
@@ -521,7 +519,7 @@ export default {
             const blob = new Blob([gpxData], { type: "application/gpx+xml" });
             saveAs(blob, `${this.trackName}.gpx`);
         },
-        loadRoute() {
+        loadRouteGPX() {
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = '.gpx';
