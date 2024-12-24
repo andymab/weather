@@ -1,6 +1,5 @@
 <template>
     <div>
-
         <v-navigation-drawer app v-model="drawer" permanent width="360">
             <v-toolbar flat>
                 <v-toolbar-title>Меню</v-toolbar-title>
@@ -56,16 +55,20 @@
                                 density="comfortable" required :rules="[rules.required]"></v-text-field>
                         </v-col>
                         <v-col cols="12" xs="12">
-                            <v-text-field v-model="customLat" label="Широта (45.05)" variant="outlined"
+                            <v-text-field v-model="customLat" label="Широта (45.05) lat" variant="outlined"
                                 hide-details="auto" density="comfortable" required
                                 :rules="[rules.required, rules.isfloat]"></v-text-field>
                         </v-col>
                         <v-col cols="12" xs="12">
-                            <v-text-field v-model="customLon" label="Долгота (41.95)" variant="outlined"
+                            <v-text-field v-model="customLon" label="Долгота (41.95) lon" variant="outlined"
                                 hide-details="auto" density="comfortable" required
                                 :rules="[rules.required, rules.isfloat]"></v-text-field>
                         </v-col>
-
+                        <v-col cols="12" xs="12">
+                            <v-text-field v-model="customHeigth" label="Высота в (м)" variant="outlined"
+                                hide-details="auto" density="comfortable" 
+                                :rules="[rules.isNumber]"></v-text-field>
+                        </v-col>
                     </v-row>
 
                     <div class="d-flex mt-4">
@@ -85,7 +88,7 @@
             <Notification ref="notification" />
             <v-toolbar app>
                 <div v-show="drawer === false" class="mr-2">
-                    <v-btn icon @click="drawer = true" >
+                    <v-btn icon @click="drawer = true">
                         <v-icon>mdi-chevron-right</v-icon>
                     </v-btn>
                 </div>
@@ -163,7 +166,7 @@ export default {
     },
     data() {
         return {
-            search:'',
+            search: '',
             mapslayer: 'openstreetmap',
             drawer: false,
             selectedLocations: [''],
@@ -172,7 +175,11 @@ export default {
             rules: {
                 required: value => !!value || 'Поле должно быть заплнено',
                 isfloat: value => {
-                    return /^\d{2}\.\d{1,3}$/.test(value) || 'Должны быть цифры и точка. ##.###';
+                    return /^\d{2}\.\d{1,5}$/.test(value) || 'Должны быть цифры и точка. ##.#####';
+                },
+                isNumber: value => {
+                    return /^\d{1,8}$/.test(value) || 'Должны быть цифры #### до 4';
+
                 },
                 counter: value => value.length <= 20 || 'Max 20 characters',
                 email: value => {
@@ -184,6 +191,7 @@ export default {
             customName: '',
             customLat: '',
             customLon: '',
+            customHeigth:'',
         };
     },
     mounted() {
@@ -211,7 +219,7 @@ export default {
 
     },
     methods: {
-        onSearch(){
+        onSearch() {
             return true;
         },
         addNotification(message, succes) {
@@ -230,7 +238,7 @@ export default {
                 "title": this.customName,
                 "value": {
                     "label": this.customName,
-                    "height": "0",
+                    "height": this.customHeigth || 0,
                     "lat": this.customLat,
                     "lon": this.customLon,
                 }
@@ -285,6 +293,8 @@ export default {
                                 params: {
                                     lat: location.lat,
                                     lon: location.lon,
+                                    //для точности здесь может быть altitude=высота на котоорой находиться поверхнось  
+                                    altitude: location.heigth,
                                 },
                             });
                             this.weatherData.push(response.data);

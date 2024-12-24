@@ -91,6 +91,14 @@ export default {
         renderChart() {
             Highcharts.chart(this.$refs.weatherChart, this.chartOptions);
         },
+        formatHpa(hPa) {
+                const height = this.selectedLocations[0].heigth;
+               
+                const barometricStep = 8;
+                const pressureChange = height / barometricStep;
+                const pressure = parseFloat(((hPa - pressureChange) * 0.75006375541921).toFixed(0));
+                return pressure;
+            },
         initialData() {
             if (this.weatherData.length === 0) return;
 
@@ -135,12 +143,12 @@ export default {
                     const seriesWindSpeed = [];
                     data.properties.timeseries.forEach(item => {
                         seriesTemperature.push(item.data.instant.details.air_temperature);
-                        seriesPressure.push(item.data.instant.details.air_pressure_at_sea_level);
+                        seriesPressure.push(this.formatHpa(item.data.instant.details.air_pressure_at_sea_level));
                         seriesHumidity.push(item.data.instant.details.relative_humidity);
                         seriesWindSpeed.push(item.data.instant.details.wind_speed);
                     });
 
-
+                    
 
                     this.seriesTemperature.push({
                         name: `Температура (°C) - ${this.selectedLocations[index].label}`,
@@ -151,6 +159,8 @@ export default {
                         name: `Давление (мм рт. ст.) - ${this.selectedLocations[index].label}`,
                         data: seriesPressure,
                     });
+
+
 
                     this.seriesHumidity.push({
                         name: `Влажность (%) - ${this.selectedLocations[index].label}`,
@@ -179,9 +189,6 @@ export default {
                 xAxis: {
                     categories: categories,
                     plotLines
-
-
-
                 },
                 yAxis: {
                     title: {
