@@ -44,7 +44,9 @@ vue
                         <v-icon @click="isElevations = !isElevations" :disabled="!tracks"
                             v-tooltip.bottom="`Загружать Профиль высот`" class="ma-2 "
                             :class="{ 'text-green-accent-3': isElevations, ' grey-lighten-2 ': !isElevations }">mdi-elevation-rise</v-icon>
-
+                        <v-icon @click="isWeathers = !isWeathers" :disabled="!tracks"
+                            v-tooltip.bottom="`Получить погоду`" class="ma-2 " disabled
+                            :class="{ 'text-green-accent-3': isWeathers, ' grey-lighten-2 ': !isWeathers }">mdi-weather-partly-cloudy</v-icon>
 
 
                     </div>
@@ -161,6 +163,7 @@ vue
         },
         data() {
             return {
+                isWeathers:false,
                 isFeatures: false,
                 isElevations: false,
                 isJoinTracks: false,
