@@ -971,12 +971,12 @@ vue
         },
         watch: {
             isElevations(newValue) {
-                if (newValue && this.route.length > 1) {
+                if (newValue && this.route.length > 0) {
                     this.uploadElevations();
                 }
             },
             isFeatures(newValue) {
-                if (newValue && this.route.length > 1) {
+                if (newValue && this.route.length > 0) {
                     this.uploadFeatures();
                 }
             },
