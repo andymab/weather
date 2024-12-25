@@ -14,14 +14,15 @@ export default {
         return {
             selectedMode: null,
             trackmode: [
-                { mode: 'foot-walking', label: 'Для пешеходных маршрутов', icon: 'mdi-ski-cross-country' },
-                { mode: 'foot-hiking', label: 'Для пеших походов и троп', icon: 'mdi-walk' },
-                { mode: 'cycling-mountain', label: 'Для горных велосипедных маршрутов', icon: 'mdi-bicycle' },
-                { mode: 'cycling-regular', label: 'Для обычных велосипедных маршрутов', icon: 'mdi-bike' },
-                { mode: 'cycling-road', label: 'Для велосипедных маршрутов по дорогам', icon: 'mdi-bike' },
-                { mode: 'cycling-electric', label: 'Для маршрутов на электрических велосипедах', icon: 'mdi-bike' },
-                { mode: 'wheelchair', label: 'Для маршрутов, доступных для инвалидных колясок', icon: 'mdi-wheelchair' },
-                { mode: 'driving-car', label: 'Для автомобильных маршрутов', icon: 'mdi-car' },
+                { mode: 'foot-walking', label: 'Турист', icon: 'mdi-ski-cross-country' },
+                { mode: 'foot-hiking', label: 'Горные туристы', icon: 'mdi-walk' },
+                { mode: 'cycling-mountain', label: 'Горные велосипеды', icon: 'mdi-bicycle' },
+                { mode: 'cycling-regular', label: 'Велосипед', icon: 'mdi-bike' },
+                { mode: 'cycling-road', label: 'Шоссейный велосипед', icon: 'mdi-bike' },
+                { mode: 'cycling-electric', label: 'Электро велосипед', icon: 'mdi-bike' },
+                { mode: 'wheelchair', label: 'Инвалидная коляска', icon: 'mdi-wheelchair' },
+                { mode: 'driving-car', label: 'Автомобиль', icon: 'mdi-car' },
+                //можно для разных типов грузовиков
             ],
         };
     },
