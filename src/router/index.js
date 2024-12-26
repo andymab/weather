@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
-import WeatherForm from "../components/WeatherForm.vue";
+import WeatherPage from "../components/WeatherPage.vue";
 import store from "../Auth/store";
 import Profile from "../Auth/Profile.vue";
 import Login from "../Auth/Login.vue";
@@ -7,7 +7,7 @@ import Login from "../Auth/Login.vue";
 import Users from "../Auth/Admin/Users.vue";
 
 const routes = [
-  { path: "/", component: WeatherForm },
+  { path: "/", component: WeatherPage },
   { path: "/login", component: Login },
   {
     path: "/profile",

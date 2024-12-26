@@ -73,10 +73,13 @@ export default {
                 },
                 xAxis: {
                     title: { text: '' },
-                    categories: ['1', '4', '12'] // Изначально пустой массив категорий
+                    categories: ['1', '4', '12'], // Изначально пустой массив категорий
+                    gridLineWidth: 1
                 },
                 yAxis: {
-                    title: { text: '' }
+                    title: { text: '' },
+                    gridLineWidth: 1,
+                    min: 0,
                 },
                 tooltip: {
                     formatter: function () {
@@ -100,12 +103,14 @@ export default {
             Highcharts.addEvent(container, 'click', (e) => {
                 e = this.chart.pointer.normalize(e); // Нормализуем координаты события
                 // console.log(`index ${e.point.index}`);
-                console.log(`Clicked chart at , ${e.chartY}`,e);
+               // console.log(`Clicked chart at , ${e.chartY}`,e);
                 this.$emit('addTrackMarker', this.route[e.point.index],`${e.point.y}м <br/> Пройдено ${e.point.distance} <br/> Время ${e.point.duration}`);
             });
         },
 
         plotElevationProfile() {  ///подготовка к постороению графика высот
+            const firstValue = this.elevationData.length > 0 ? Math.min(...this.elevationData.map(point => point.y)) : 0;
+            this.chart.yAxis[0].update({ min: firstValue }, false);
             this.chart.xAxis[0].setCategories(this.route.map((_, index) => `${index + 1}`), false); // Обновляем категории
             this.chart.series[0].setData(this.elevationData, true); // Обновляем данные и перерисовываем график
         },
@@ -126,9 +131,12 @@ export default {
             if (this.fullScreenChart) {
                 this.fullScreenChart.destroy();
             }
+            const firstValue = this.elevationData.length > 0 ? Math.min(...this.elevationData.map(point => point.y)) : 0;
+
             this.fullScreenChart = Highcharts.chart(this.$refs.fullScreenContainer, {
                 chart: {
                     type: 'area',
+                    backgroundColor: '#f4f4f4', // Цвет фона графика
                 },
                 legend: {
                     enabled: false,
@@ -138,10 +146,13 @@ export default {
                 },
                 xAxis: {
                     title: { text: '' },
-                    categories: this.route,
+                    categories: this.route.map((_, index) => `${index + 1}`),
+                    gridLineWidth: 1,
                 },
                 yAxis: {
                     title: { text: '' },
+                    min: firstValue,
+                    gridLineWidth: 1,
                 },
                 tooltip: {
                     formatter: function () {

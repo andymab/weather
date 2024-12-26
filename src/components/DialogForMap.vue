@@ -30,7 +30,7 @@
                         <v-spacer></v-spacer>
                         <v-btn icon flat @click="dialog = false"><v-icon>mdi-close</v-icon></v-btn>
                     </div>
-                    <MapComponent @updateCoords="updateCoords" :coords="getCoords" :layer="getlayer" />
+                    <MapComponent @updateCoords="updateCoords" :coords="getCoords" :elevation="getElevation" :layer="getlayer" />
                 </v-card-text>
 
 
@@ -55,6 +55,9 @@
                 type: Array,
                 default: () => [45.04886, 41.95639], // Значение по умолчанию
             },
+            elevation:{
+                type: Number,
+            },
             layer: {
                 type: String,
                 default: () => 'openstreetmap', // Значение по умолчанию                
@@ -73,6 +76,9 @@
             getlayer() {
                 return this.layer;
             },
+            getElevation(){
+                return this.elevation;
+            }
         },
         methods: {
             updateCoords(coords) {

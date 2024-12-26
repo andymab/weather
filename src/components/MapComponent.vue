@@ -4,7 +4,7 @@ vue
         <v-btn rounded="0" class="text-white " width="380px" style="position:absolute; right:0; z-index:2000"
             color="light-green" @click="togglePanel">
             Настройки маршрута
-            <v-icon :icon="panelVisible ? 'mdi-chevron-up' : 'mdi-chevron-down'" end></v-icon>
+            <v-icon :icon="ispanelVisible ? 'mdi-chevron-up' : 'mdi-chevron-down'" end></v-icon>
         </v-btn>
         <!-- <v-toolbar flat>
             <v-toolbar-title>Настройки маршрута <span v-if="route.length > 1">{{ calculateDistance
@@ -15,7 +15,7 @@ vue
             </v-btn>
         </v-toolbar> -->
 
-        <div v-if="panelVisible" class="settings-panel">
+        <div v-if="ispanelVisible" class="settings-panel">
             <!-- <v-card width="360px"> -->
             <v-tabs v-model="tab" background-color="transparent" class="pa-0 ma-0 ">
                 <v-tab value="layer" class="tabs-layer-item"> {{ $vuetify.display.xs ? 'Слой' : 'Слой' }} </v-tab>
@@ -30,29 +30,29 @@ vue
                 </v-tabs-window-item>
                 <v-tabs-window-item value="custom-track">
                     <div class="d-flex">
-                        <v-icon @click="tracks = !tracks" v-tooltip.bottom="`Редактировать`" class="ma-2 "
-                            :class="{ 'text-green-accent-3': tracks, ' grey-lighten-2 ': !tracks }">mdi-vector-square-edit</v-icon>
-                        <v-icon @click="autotrack = !autotrack" :disabled="!tracks"
+                        <v-icon @click="istracks = !istracks" v-tooltip.bottom="`Редактировать`" class="ma-2 "
+                            :class="{ 'text-green-accent-3': istracks, ' grey-lighten-2 ': !istracks }">mdi-vector-square-edit</v-icon>
+                        <v-icon @click="isautotrack = !isautotrack" :disabled="!istracks"
                             v-tooltip.bottom="`Проложить автоматически`" class="ma-2 "
-                            :class="{ 'text-teal-lighten-3': autotrack, ' grey-lighten-2 ': !autotrack }">mdi-arrow-decision-auto-outline</v-icon>
-                        <v-icon @click="isJoinTracks = !isJoinTracks" :disabled="!tracks"
+                            :class="{ 'text-teal-lighten-3': isautotrack, ' grey-lighten-2 ': !isautotrack }">mdi-arrow-decision-auto-outline</v-icon>
+                        <v-icon @click="isJoinTracks = !isJoinTracks" :disabled="!istracks"
                             v-tooltip.bottom="`Объединять загруженые треки`" class="ma-2 "
                             :class="{ 'text-green-accent-3': isJoinTracks, ' grey-lighten-2 ': !isJoinTracks }">mdi-group</v-icon>
-                        <v-icon @click="isFeatures = !isFeatures" :disabled="!tracks"
+                        <v-icon @click="isFeatures = !isFeatures" :disabled="!istracks"
                             v-tooltip.bottom="`Загружать Достопримечательности`" class="ma-2 "
                             :class="{ 'text-green-accent-3': isFeatures, ' grey-lighten-2 ': !isFeatures }">mdi-home-map-marker</v-icon>
-                        <v-icon @click="isElevations = !isElevations" :disabled="!tracks"
+                        <v-icon @click="isElevations = !isElevations" :disabled="!istracks"
                             v-tooltip.bottom="`Загружать Профиль высот`" class="ma-2 "
                             :class="{ 'text-green-accent-3': isElevations, ' grey-lighten-2 ': !isElevations }">mdi-elevation-rise</v-icon>
-                        <v-icon @click="isWeathers = !isWeathers" :disabled="!tracks"
+                        <v-icon @click="isWeathers = !isWeathers" :disabled="!istracks"
                             v-tooltip.bottom="`Получить погоду`" class="ma-2 " disabled
                             :class="{ 'text-green-accent-3': isWeathers, ' grey-lighten-2 ': !isWeathers }">mdi-weather-partly-cloudy</v-icon>
 
 
                     </div>
 
-                    <div v-if="autotrackPropertys.summary || (tracks && markers.length > 1)">
-                        <div v-if="autotrack" class="d-flex flex-wrap">
+                    <div v-if="autotrackPropertys.summary || (istracks && markers.length > 1)">
+                        <div v-if="isautotrack" class="d-flex flex-wrap">
                             <TrackMode @changeMode="selectMode" />
                         </div>
                         <div v-if="autotrackPropertys.summary" class="mb-2">
@@ -67,12 +67,9 @@ vue
                         <v-icon @click="removeLastPoint" :disabled="markers.length == 0"
                             v-tooltip.bottom="`Удалить последнюю точку`"
                             class="ma-2 text-amber-accent-4">mdi-vector-square-remove</v-icon>
-                        <v-icon @click="removeAllPoints" v-tooltip.bottom="`Удалить все точки`"
+                        <v-icon @click="clearMapEntities" v-tooltip.bottom="`Очистить все`"
                             class="ma-2 text-amber-accent-4"
                             :disabled="markers.length == 0">mdi-delete-forever-outline</v-icon>
-                        <v-icon @click="removeAllMarkers" v-tooltip.bottom="`Удалить все маркеры`"
-                            class="ma-2 text-amber-accent-4"
-                            :disabled="markers.length == 0">mdi-delete-circle-outline</v-icon>
                     </div>
 
                     <div class="d-flex justify-space-around">
@@ -110,7 +107,7 @@ vue
 
 
 
-        <v-dialog v-model="dialogFileName" max-width="400">
+        <v-dialog v-model="isdialogFileName" max-width="400">
             <v-card>
                 <v-card-title>
                     <span class="headline">Введите имя файла</span>
@@ -160,33 +157,42 @@ vue
                 type: Array,
                 default: () => [45.049, 41.956],
             },
+            elevation: {
+                type: Number,
+            }
         },
         data() {
             return {
+                //состояния
                 isWeathers: false,
                 isFeatures: false,
                 isElevations: false,
                 isJoinTracks: false,
-                dialogFileName: false,
+                istracks: false,
+                isdialogFileName: false,
+                isautotrack: false,
+                ispanelVisible: false,
+
                 chart: null,
                 tab: 'layer',
-                autotrack: false,
 
                 selectedMode: 'foot-walking',
                 selectedlayer: { label: 'Opentopomap', path: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png' },
                 currentMarker: null,
                 currentLayer: null,
+
                 routesLocation: {},//полученный из файла
                 features: [],
                 elevationsLocation: [],
                 autotrackPropertys: reactive({}), //свойства участков трека созданых автоматически
                 elevations: [],
                 elevationData: [],
-                tracks: false,
-                panelVisible: false,
+                markers: [], // Массив для хранения ссылок на маркеры
+                route: [],
+
+
                 trackName: '',
                 map: null,
-                markers: [], // Массив для хранения ссылок на маркеры
 
                 markerOptions: {
                     draggable: true,
@@ -199,7 +205,6 @@ vue
                     })
                 },
 
-                route: [],
                 polyline: null,
                 loading: false,
                 saveFunction: null,
@@ -257,6 +262,29 @@ vue
             this.initializeMap();
         },
         methods: {
+            clearMapEntities() {
+                this.markers.forEach(marker => {
+                    this.map.removeLayer(marker);
+                });
+                if (this.polyline) {
+                    this.polyline.setLatLngs(this.route); // Обновляем полилинию
+                    this.map.removeLayer(this.polyline); // Удаляем полилинию с карты
+                    this.polyline = null; // Сбрасываем ссылку на полилинию
+                }
+
+                this.routesLocation = {};//полученный из файла
+                this.features = [];
+                this.elevationsLocation = [];
+                this.autotrackPropertys = {}; //свойства участков трека созданых автоматически
+                this.elevations = [];
+                this.elevationData = [];
+                this.markers = []; // Массив для хранения ссылок на маркеры
+                this.route = [];
+
+
+                this.$refs.notification.notify("Очищен clearMapEntities", 'succes');
+
+            },
             initializeMap() {
                 this.map = L.map(this.$refs.mapContainer).setView(this.coords, 15);
 
@@ -270,20 +298,20 @@ vue
 
 
 
-                this.currentMarker = L.marker(this.coords, this.markerOptions).addTo(toRaw(this.map)).bindPopup(`Координаты: ${this.coords[0]}, ${this.coords[1]}`).openPopup();
+                this.currentMarker = L.marker(this.coords, this.markerOptions).addTo(toRaw(this.map)).bindPopup(`Координаты: ${parseFloat(this.coords[0]).toFixed(3)}, ${parseFloat(this.coords[1]).toFixed(3)}  <br /> Высота:${this.elevation}м`).openPopup();
 
 
                 this.map.on('click', (e) => {
                     const { lat, lng } = e.latlng;
-                    console.log(lat, lng,'lat', 'lon');
-                    if (!this.tracks && this.markers.length === 0) {
+                    console.log(lat, lng, 'lat', 'lon');
+                    if (!this.istracks && this.markers.length === 0) {
                         //стоит получить также высоту поверхности
                         this.addMarker(lat, lng);
                         this.getElevations();
 
                         setTimeout(() => {
                             if (this.elevations.length > 0) {
-                                console.log('this.elevations[0]',this.elevations[0])
+                                console.log('this.elevations[0]', this.elevations[0])
                                 this.$emit('updateCoords', { lat, lng, height: this.elevations[0] });
                             }
                         }, 1000);
@@ -341,10 +369,10 @@ vue
             },
             openDialogFileName(func) {
                 this.saveFunction = func;
-                this.dialogFileName = true;
+                this.isdialogFileName = true;
             },
             closeDialogFileName() {
-                this.dialogFileName = false;
+                this.isdialogFileName = false;
                 this.trackName = ''; // Сбрасываем имя файла
                 this.saveFunction = null; // Сбрасываем функци
             },
@@ -478,7 +506,7 @@ vue
             },
 
             togglePanel() {
-                this.panelVisible = !this.panelVisible; // Переключаем состояние видимости панели
+                this.ispanelVisible = !this.ispanelVisible; // Переключаем состояние видимости панели
             },
 
             addTrackMarker(route, elevation) {
@@ -644,40 +672,7 @@ vue
                     this.$refs.notification.notify("Маршрут пуст!", 'error');
                 }
             },
-            removeAllPoints() {
-                if (this.route.length > 0) {
-                    this.route = []; // Очищаем массив маршрута
-                    this.features = [];
-                    this.elevations = [];
-                    this.elevationsLocation = [];
-                    this, this.routesLocation = [];
 
-                    if (this.polyline) {
-                        this.polyline.setLatLngs(this.route); // Обновляем полилинию
-                        this.map.removeLayer(this.polyline); // Удаляем полилинию с карты
-                        this.polyline = null; // Сбрасываем ссылку на полилинию
-                    }
-                    this.$refs.notification.notify("Все точки удалены.", 'succes');
-                } else {
-                    this.$refs.notification.notify("Маршрут пуст!", 'error');
-                }
-            },
-            removeAllMarkers() {
-                // Проверяем, есть ли маркеры для удаления
-                if (this.markers.length > 0) {
-                    // Проходим по всем маркерам и удаляем их с карты
-                    this.markers.forEach(marker => {
-                        this.map.removeLayer(marker);
-                    });
-
-                    // Очищаем массив маркеров
-                    this.markers = [];
-                    this.features = [];
-                    this.$refs.notification.notify("Все маркеры удалены.", 'succes');
-                } else {
-                    this.$refs.notification.notify("Нет маркеров для удаления.", 'error');
-                }
-            },
             handleUploads() { //системная штука позволяющая упростить зависимые части
                 const uploadActions = {
                     isElevations: this.getElevations,
@@ -957,6 +952,38 @@ vue
                     });
                 }
                 return data;
+
+            //     calculateTimeAndDistance() {
+            //     return false;
+            //     //points, V_base, k
+            //     let totalDistance = 0;
+            //     let totalTime = 0;
+
+            //     for (let i = 0; i < points.length - 1; i++) {
+            //         const d = points[i + 1].horizontalDistance; // Горизонтальное расстояние между точками
+            //         const h = points[i + 1].height - points[i].height; // Разница в высоте
+
+            //         // Расчет реального расстояния
+            //         const d_real = Math.sqrt(d * d + h * h);
+
+            //         // Расчет угла наклона
+            //         const alpha = Math.atan(h / d);
+
+            //         // Учет скорости
+            //         const V_actual = V_base * (1 - k * alpha);
+
+            //         // Расчет времени
+            //         const time = d_real / V_actual;
+
+            //         totalDistance += d_real;
+            //         totalTime += time;
+            //     }
+
+            //     return {
+            //         totalDistance,
+            //         totalTime
+            //     };
+            // }
             },
             calculateDistancesAndTimes() {
                 if (this.routesLocation.length === 0) {
@@ -1029,7 +1056,7 @@ vue
             coords(newCoords) {
                 if (this.map) {
                     this.map.setView(newCoords, 17);
-                    L.marker(newCoords, this.markerOptions).addTo(this.map).bindPopup(`Координаты: ${newCoords[0]}, ${newCoords[1]}`);//.openPopup();
+                    this.currentMarker = L.marker(newCoords, this.markerOptions).addTo(toRaw(this.map)).bindPopup(`Координаты: ${parseFloat(this.newCoords[0]).toFixed(3)}, ${parseFloat(this.newCoords[1]).toFixed(3)}  <br /> Высота:${this.elevation}м`).openPopup();
                 }
             },
 
