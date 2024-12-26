@@ -79,6 +79,13 @@
                             </template>
                             Добавить место в список
                         </v-tooltip>
+                        <v-tooltip text="Tooltip">
+                            <template v-slot:activator="{ props }">
+                                <v-btn icon @click="saveLocations" v-bind="props" color="primary" disabled class="ml-2"><v-icon>mdi-content-save</v-icon>
+                                </v-btn>
+                            </template>
+                            Сохранить список
+                        </v-tooltip>
                     </div>
                 </v-container>
             </v-form>
@@ -154,7 +161,7 @@ import WeatherDataTable from './WeatherDataTable.vue';
 import Notification from './Notification.vue';
 import DialogForMap from './DialogForMap.vue';
 
-
+import { mapGetters } from 'vuex';
 
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -164,6 +171,7 @@ export default {
     components: {
         WeatherDataTable, WeatherChart, DialogForMap, Notification,
     },
+
     data() {
         return {
             search: '',
@@ -198,6 +206,7 @@ export default {
         this.fetchLocations();
     },
     computed: {
+        ...mapGetters(['isUserAuth', 'isUserAdmin']),
         isXs() {
             return this.$vuetify.display.xs;
         },
@@ -219,6 +228,9 @@ export default {
 
     },
     methods: {
+        saveLocations(){
+
+        },
         onSearch() {
             return true;
         },

@@ -2,6 +2,7 @@ import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router'; // Создайте router.js для маршрутов
 import { createVuetify } from "vuetify";
+import store from "./Auth/store";
 
 
 import "vuetify/styles";
@@ -29,6 +30,7 @@ const vuetify = createVuetify({
   import "vuetify/dist/vuetify.min.css";
 
 const app = createApp(App);
+app.use(store);
 app.use(router);
 app.use(vuetify);
 app.mount('#app');
