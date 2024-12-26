@@ -9,8 +9,8 @@
                     <v-text-field color="primary" variant="underlined" v-model="password" type="password" label="Пароль"
                         required></v-text-field>
                     <v-checkbox v-model="rememberMe" density="compact" label="Запомнить меня"></v-checkbox>
-                    <v-btn variant="text" color="primary" @click="goToRegistration" text="Зарегистрироваться"
-                        block></v-btn>
+                    <!-- <v-btn variant="text" color="primary" @click="goToRegistration" text="Зарегистрироваться"
+                        block></v-btn> -->
                     <v-btn :loading="loading" class="mt-4" text="Войти" type="submit" block></v-btn>
 
 

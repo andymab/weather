@@ -229,7 +229,8 @@ export default {
         },
         updateCoords(coords) {
             this.customLat = coords.lat;
-            this.customLon = coords.lon;
+            this.customLon = coords.lng;
+            this.customHeigth = coords.height;    
         },
         async getCustomWeather() {
             const { valid } = await this.$refs.customForm.validate();
