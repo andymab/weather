@@ -72,20 +72,10 @@
                     </v-row>
 
                     <div class="d-flex mt-4">
-                        <v-tooltip text="Tooltip">
-                            <template v-slot:activator="{ props }">
-                                <v-btn icon type="submit" v-bind="props" color="primary"><v-icon>mdi-plus</v-icon>
-                                </v-btn>
-                            </template>
-                            Добавить место в список
-                        </v-tooltip>
-                        <v-tooltip text="Tooltip">
-                            <template v-slot:activator="{ props }">
-                                <v-btn icon @click="saveLocations" v-bind="props" color="primary" disabled class="ml-2"><v-icon>mdi-content-save</v-icon>
-                                </v-btn>
-                            </template>
-                            Сохранить список
-                        </v-tooltip>
+
+                        <v-btn icon="mdi-plus" type="submit" color="primary" v-tooltip.bottom="`Добавить место в список`"></v-btn>
+                        <v-spacer></v-spacer>
+                        <v-btn icon="mdi-plus" @click="saveLocations" color="primary" disabled v-tooltip.bottom="`Сохранить список`"></v-btn>
                     </div>
                 </v-container>
             </v-form>
