@@ -14,10 +14,10 @@
                 <v-container fluid>
                     <v-row>
                         <v-col cols="12" md="12" v-for="(location, index) in selectedLocations" :key="index">
-                            <v-autocomplete v-model="selectedLocations[index]" :items="locations" label="Выберите место"
-                                required item-text="title" item-value="value" variant="outlined" hide-details
-                                density="comfortable" :rules="[rules.required]" :search-input.sync="search"
-                                @update:search-input="onSearch" clearable>
+                            <v-autocomplete v-if="locations.length > 0" v-model="selectedLocations[index]"
+                                :items="locations" label="Выберите место" required item-text="title" item-value="value"
+                                variant="outlined" hide-details density="comfortable" :rules="[rules.required]"
+                                :search-input.sync="search" @update:search-input="onSearch" clearable>
                                 <template v-slot:selection="{ item }">
                                     <div>{{ item ? item.title : 'Выберите место' }}</div>
                                 </template>
@@ -33,7 +33,8 @@
                             Получить погоду
                         </v-tooltip>
                         <v-spacer></v-spacer>
-                        <DialogForMap @updateCoords="updateCoords" :coords="getFirstCoords" :elevation="getFirstElevation" :layer="mapslayer" />
+                        <DialogForMap @updateCoords="updateCoords" :coords="getFirstCoords"
+                            :elevation="getFirstElevation" :layer="mapslayer" />
                         <v-spacer></v-spacer>
                         <v-tooltip text="Добавить к сравнению">
                             <template v-slot:activator="{ props }">
@@ -60,7 +61,7 @@
                     <v-btn icon="mdi-plus" type="submit" color="primary"
                         v-tooltip.bottom="`Добавить место в список`"></v-btn>
                     <v-spacer></v-spacer>
-                    <v-btn icon="mdi-content-save" @click="saveLocations" color="primary" disabled
+                    <v-btn icon="mdi-content-save" @click="saveLocations" color="primary" :disabled="!isUserAuth"
                         v-tooltip.bottom="`Сохранить список`"></v-btn>
                 </div>
             </v-form>
@@ -130,182 +131,233 @@
 </template>
 
 <script>
-    import axios from 'axios';
-    import WeatherChart from './WeatherChart.vue';
-    import WeatherDataTable from './WeatherDataTable.vue';
-    import Notification from './Notification.vue';
-    import DialogForMap from './DialogForMap.vue';
+import api from '../Auth/api';
+import axios from 'axios';
+import WeatherChart from './WeatherChart.vue';
+import WeatherDataTable from './WeatherDataTable.vue';
+import Notification from './Notification.vue';
+import DialogForMap from './DialogForMap.vue';
 
-    import { mapGetters } from 'vuex';
+import { mapGetters } from 'vuex';
 
-    import { format, parseISO } from 'date-fns';
-    import { ru } from 'date-fns/locale';
+import { format, parseISO } from 'date-fns';
+import { ru } from 'date-fns/locale';
 
-    export default {
-        name: 'WeatherPage',
-        components: {
-            WeatherDataTable, WeatherChart, DialogForMap, Notification,
-        },
+export default {
+    name: 'WeatherPage',
+    components: {
+        WeatherDataTable, WeatherChart, DialogForMap, Notification,
+    },
 
-        data() {
-            return {
-                search: '',
-                mapslayer: 'openstreetmap',
-                drawer: false,
-                selectedLocations: [''],
-                locations: [],
-                weatherData: [],
-                rules: {
-                    required: value => !!value || 'Поле должно быть заплнено',
-                    isfloat: value => {
-                        return /^\d{2}\.\d{1,5}$/.test(value) || 'Должны быть цифры и точка. ##.#####';
-                    },
-                    isNumber: value => {
-                        return /^\d{1,8}$/.test(value) || 'Должны быть цифры #### до 4';
-
-                    },
-                    counter: value => value.length <= 20 || 'Max 20 characters',
-                    email: value => {
-                        const pattern = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-                        return pattern.test(value) || 'Invalid e-mail.'
-                    },
+    data() {
+        return {
+            search: '',
+            mapslayer: 'openstreetmap',
+            drawer: false,
+            selectedLocations: [],
+            locations: [],
+            weatherData: [],
+            rules: {
+                required: value => !!value || 'Поле должно быть заплнено',
+                isfloat: value => {
+                    return /^\d{2}\.\d{1,5}$/.test(value) || 'Должны быть цифры и точка. ##.#####';
+                },
+                isNumber: value => {
+                    return /^\d{1,8}$/.test(value) || 'Должны быть цифры #### до 4';
 
                 },
-                customName: '',
-                customLat: '',
-                customLon: '',
-                customHeigth: '',
-            };
-        },
-        mounted() {
-            this.fetchLocations();
-        },
-        computed: {
-            ...mapGetters(['isUserAuth', 'isUserAdmin']),
-            isXs() {
-                return this.$vuetify.display.xs;
+                counter: value => value.length <= 20 || 'Max 20 characters',
+                email: value => {
+                    const pattern = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+                    return pattern.test(value) || 'Invalid e-mail.'
+                },
+
             },
-            getFirstCoords() {
-                if (this.selectedLocations[0]) {
-                    return [this.selectedLocations[0].lat, this.selectedLocations[0].lon];
-                }
-                return [];
+            customName: '',
+            customLat: '',
+            customLon: '',
+            customHeigth: '',
+        };
+    },
+    mounted() {
+        this.fetchLocations();
+    },
+    watch:{
+        selectedLocations: {
+            handler(newValue, oldValue) {
+                console.log('newValue', newValue);
+                // Проверяем, изменился ли первый элемент массива
+                //if (newValue[0] !== oldValue[0]) {
+                    this.customName = newValue[0].label;
+                    this.customLat = newValue[0].lat;
+                    this.customLon = newValue[0].lon;
+                    this.customHeigth = newValue[0].heigth;
+                    ///this.getWeather(); // Вызываем getWeather при изменении первого элемента
+               // }
             },
-            getFirstElevation() {
+            deep: true // Убедитесь, что отслеживаются вложенные изменения
+        }
+
+
+    },
+    computed: {
+        ...mapGetters(['isUserAuth', 'isUserAdmin']),
+        isXs() {
+            return this.$vuetify.display.xs;
+        },
+        getFirstCoords() {
+            if (this.selectedLocations[0]) {
+                return [this.selectedLocations[0].lat, this.selectedLocations[0].lon];
+            }
+            return [];
+        },
+        getFirstElevation() {
+            if (this.selectedLocations.length > 0) {
                 return this.selectedLocations[0].heigth || 0;
-            },
-            period() {
-                if (this.weatherData.length > 0 && this.weatherData[0].properties.timeseries.length > 20) {
-                    const data = this.weatherData[0].properties.timeseries;
-                    const fistTime = this.formatDate(data[0].time);
-                    const lastTime = this.formatDate(data[data.length - 1].time);
-                    return `${fistTime} - ${lastTime}`;
-                }
-                return '';
-            },
-
+            }
+            return 0;
         },
-        methods: {
-            saveLocations() {
+        period() {
+            if (this.weatherData.length > 0 && this.weatherData[0].properties.timeseries.length > 20) {
+                const data = this.weatherData[0].properties.timeseries;
+                const fistTime = this.formatDate(data[0].time);
+                const lastTime = this.formatDate(data[data.length - 1].time);
+                return `${fistTime} - ${lastTime}`;
+            }
+            return '';
+        },
 
-            },
-            onSearch() {
-                return true;
-            },
-            addNotification(message, succes) {
-                this.$refs.notification.notify(message, 'success');
-            },
-            updateCoords(coords) {
-                this.customLat = coords.lat;
-                this.customLon = coords.lng;
-                this.customHeigth = coords.height;
-            },
-            async getCustomWeather() {
-                const { valid } = await this.$refs.customForm.validate();
-                if (!valid) {
-                    return;
-                }
-                const custom = {
-                    "title": this.customName,
-                    "value": {
-                        "label": this.customName,
-                        "height": this.customHeigth || 0,
-                        "lat": this.customLat,
-                        "lon": this.customLon,
-                    }
-                };
-
-                this.locations.push(custom);
-                this.customName = '';
-                this.customLat = '';
-                this.customLon = '';
-
-                // Вывод сообщения об успешном добавлении (опционально)
-                this.addNotification('Локация успешно добавлена!', 'success');
-            },
-            async fetchLocations() {
-                try {
-                    const response = await fetch(`/locations.json?cacheBust=${new Date().getTime()}`);
-                    this.locations = await response.json();
+    },
+    methods: {
+        async fetchLocations() {
+            try {
+                const response = await api.downloadLocations();
+                this.locations = response.data;
+                if (this.locations.length > 0) {
                     this.selectedLocations[0] = this.locations[0].value;
                     this.getWeather();
-                } catch (error) {
-                    console.error('Ошибка при загрузке данных:', error);
+                    this.locations.sort((a, b) => {
+                        if (a.title < b.title) return -1; // a идет перед b
+                        if (a.title > b.title) return 1;  // a идет после b
+                        return 0; // a и b равны
+                    });
+                    // this.customName = this.selectedLocations[0].label;
+                    // this.customLat = this.selectedLocations[0].lat;
+                    // this.customLon = this.selectedLocations[0].lon;
+                    // this.customHeigth = this.selectedLocations[0].heigth;
+
                 }
-            },
-            formatDate(dateString) {
-                return format(parseISO(dateString), "dd MMMM HH:mm", { locale: ru });
-            },
-            addLocation() {
-                this.selectedLocations.push('');
-            },
-            getWindDirection(degrees) {
-                if (degrees >= 337.5 || degrees < 22.5) return 'С';
-                if (degrees >= 22.5 && degrees < 67.5) return 'СВ';
-                if (degrees >= 67.5 && degrees < 112.5) return 'В';
-                if (degrees >= 112.5 && degrees < 157.5) return 'ЮВ';
-                if (degrees >= 157.5 && degrees < 202.5) return 'Ю';
-                if (degrees >= 202.5 && degrees < 247.5) return 'ЮЗ';
-                if (degrees >= 247.5 && degrees < 292.5) return 'З';
-                if (degrees >= 292.5 && degrees < 337.5) return 'СЗ';
-            },
-            async getWeather() {
-
-                this.weatherData = [];
-                try {
-
-                    for (const index in this.selectedLocations) {
-                        const location = this.selectedLocations[index];
-
-                        if (location && location.lat && location.lon) {
-
-                            try {
-                                const response = await axios.get(`https://api.met.no/weatherapi/locationforecast/2.0/compact`, {
-                                    params: {
-                                        lat: location.lat,
-                                        lon: location.lon,
-                                        //для точности здесь может быть altitude=высота на котоорой находиться поверхнось  
-                                        altitude: location.heigth,
-                                    },
-                                });
-                                this.weatherData.push(response.data);
-                                this.drawer = false;
-                            } catch (error) {
-                                console.error(`Error fetching weather data for location at index ${index}:`, error);
-                            }
-                        } else {
-                            console.warn(`Location at index ${index} is invalid. Lat: ${location ? location.lat : 'undefined'}, Lon: ${location ? location.lon : 'undefined'}`);
-                        }
-                    };
-                } catch (error) {
-                    console.error('Ошибка получения данных о погоде:', error);
-                    alert('Не удалось получить данные о погоде. Проверьте координаты.');
-                }
-            },
+            } catch (error) {
+                console.error("Ошибка при загрузке locations:", error);
+                const response = await fetch(`/locations.json?cacheBust=${new Date().getTime()}`);
+                this.locations = await response.json();
+                this.selectedLocations[0] = this.locations[0].value;
+                this.getWeather();
+            }
         },
-    };
+        async saveLocations() {
+            this.loading = true;
+            try {
+                const response = await api.uploadLocations(this.locations);
+                const data = response.data;
+                this.message(data.message, 'info');
+
+            } catch (error) {
+                this.errors = error.response.data.errors;
+                console.error("Ошибка при выгрузки", error);
+            } finally {
+                this.loading = false;
+
+            }
+        },
+        onSearch() {
+            return true;
+        },
+        addNotification(message, succes) {
+            this.$refs.notification.notify(message, 'success');
+        },
+        updateCoords(coords) {
+            this.customLat = coords.lat;
+            this.customLon = coords.lng;
+            this.customHeigth = coords.height;
+        },
+        async getCustomWeather() {
+            const { valid } = await this.$refs.customForm.validate();
+            if (!valid) {
+                return;
+            }
+            const custom = {
+                "title": this.customName,
+                "value": {
+                    "label": this.customName,
+                    "height": this.customHeigth || 0,
+                    "lat": this.customLat,
+                    "lon": this.customLon,
+                }
+            };
+
+            this.locations.push(custom);
+            this.customName = '';
+            this.customLat = '';
+            this.customLon = '';
+
+            // Вывод сообщения об успешном добавлении (опционально)
+            this.addNotification('Локация успешно добавлена!', 'success');
+        },
+
+        formatDate(dateString) {
+            return format(parseISO(dateString), "dd MMMM HH:mm", { locale: ru });
+        },
+        addLocation() {
+            this.selectedLocations.push('');
+        },
+        getWindDirection(degrees) {
+            if (degrees >= 337.5 || degrees < 22.5) return 'С';
+            if (degrees >= 22.5 && degrees < 67.5) return 'СВ';
+            if (degrees >= 67.5 && degrees < 112.5) return 'В';
+            if (degrees >= 112.5 && degrees < 157.5) return 'ЮВ';
+            if (degrees >= 157.5 && degrees < 202.5) return 'Ю';
+            if (degrees >= 202.5 && degrees < 247.5) return 'ЮЗ';
+            if (degrees >= 247.5 && degrees < 292.5) return 'З';
+            if (degrees >= 292.5 && degrees < 337.5) return 'СЗ';
+        },
+        async getWeather() {
+
+            this.weatherData = [];
+            try {
+
+                for (const index in this.selectedLocations) {
+                    const location = this.selectedLocations[index];
+
+                    if (location && location.lat && location.lon) {
+
+                        try {
+                            const response = await axios.get(`https://api.met.no/weatherapi/locationforecast/2.0/compact`, {
+                                params: {
+                                    lat: location.lat,
+                                    lon: location.lon,
+                                    //для точности здесь может быть altitude=высота на котоорой находиться поверхнось  
+                                    altitude: location.heigth,
+                                },
+                            });
+                            this.weatherData.push(response.data);
+                            this.drawer = false;
+                        } catch (error) {
+                            console.error(`Error fetching weather data for location at index ${index}:`, error);
+                        }
+                    } else {
+                        console.warn(`Location at index ${index} is invalid. Lat: ${location ? location.lat : 'undefined'}, Lon: ${location ? location.lon : 'undefined'}`);
+                    }
+                };
+            } catch (error) {
+                console.error('Ошибка получения данных о погоде:', error);
+                alert('Не удалось получить данные о погоде. Проверьте координаты.');
+            }
+        },
+    },
+};
 </script>
 
 <style scoped>
-    /* Добавьте стили по необходимости */
+/* Добавьте стили по необходимости */
 </style>

@@ -26,11 +26,11 @@ apiClient.interceptors.request.use(
 );
 
 export default {
-  getLocations(id) {
-    return apiClient.get(`/locations`);
+  downloadLocations() {
+    return apiClient.get(`/download-locations`);
   },
-  updateLocations(locations) {
-    return apiClient.post(`/saveLocation`, {
+  uploadLocations(locations) {
+    return apiClient.post(`/upload-locations`, {
       locations: locations,
     });
   },
