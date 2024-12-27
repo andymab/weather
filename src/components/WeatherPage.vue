@@ -46,7 +46,7 @@
                 </v-container>
             </v-form>
 
-            <v-form ref="customForm" @submit.prevent="getCustomWeather" width="100%">
+            <v-form ref="customForm" @submit.prevent="setCustomPlace" width="100%">
                 <v-text-field v-model="customName" label="Место" variant="outlined" hide-details="auto"
                     density="compact" required :rules="[rules.required]" class="my-2 mx-4"></v-text-field>
                 <v-text-field v-model="customLat" label="Широта (45.05) lat" variant="outlined" hide-details="auto"
@@ -182,19 +182,19 @@ export default {
     mounted() {
         this.fetchLocations();
     },
-    watch:{
+    watch: {
         selectedLocations: {
             handler(newValue, oldValue) {
                 console.log('newValue', newValue);
                 // Проверяем, изменился ли первый элемент массива
                 //if (newValue[0] !== oldValue[0]) {
-                    this.customName = newValue[0].label;
-                    this.customLat = newValue[0].lat;
-                    this.customLon = newValue[0].lon;
-                    this.customHeight = newValue[0].heigth;
-                    console.log(this.customHeight,'this.customHeight');
-                    ///this.getWeather(); // Вызываем getWeather при изменении первого элемента
-               // }
+                this.customName = newValue[0].label;
+                this.customLat = newValue[0].lat;
+                this.customLon = newValue[0].lon;
+                this.customHeight = newValue[0].heigth;
+                console.log(this.customHeight, 'this.customHeight');
+                ///this.getWeather(); // Вызываем getWeather при изменении первого элемента
+                // }
             },
             deep: true // Убедитесь, что отслеживаются вложенные изменения
         }
@@ -283,12 +283,11 @@ export default {
             this.customLon = coords.lng;
             this.customHeight = coords.height;
         },
-        async getCustomWeather() {
+        async setCustomPlace() {
             const { valid } = await this.$refs.customForm.validate();
             if (!valid) {
                 return;
             }
-            console.log('custom',this.customHeight);
             const custom = {
                 "title": this.customName,
                 "value": {
@@ -299,7 +298,14 @@ export default {
                 }
             };
 
-            this.locations.push(custom);
+            const location = this.locations.find(item => item.title === this.customName);
+
+            if (location) {
+                location.value = custom.value;
+            } else {
+                this.locations.push(custom);
+            }
+
             this.customName = '';
             this.customLat = 0;
             this.customLon = 0;
