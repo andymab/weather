@@ -55,7 +55,7 @@
                 <v-text-field v-model="customLon" label="Долгота (41.95) lon" variant="outlined" hide-details="auto"
                     density="compact" required :rules="[rules.required, rules.isfloat]"
                     class="mb-2 mx-4"></v-text-field>
-                <v-text-field v-model="customHeigth" label="Высота в (м)" variant="outlined" hide-details="auto"
+                <v-text-field v-model="customHeight" label="Высота в (м)" variant="outlined" hide-details="auto"
                     density="compact" :rules="[rules.isNumber]" class="mb-2 mx-4"></v-text-field>
                 <div class="d-flex mt-4 mx-4">
                     <v-btn icon="mdi-plus" type="submit" color="primary"
@@ -163,7 +163,7 @@ export default {
                     return /^\d{2}\.\d{1,5}$/.test(value) || 'Должны быть цифры и точка. ##.#####';
                 },
                 isNumber: value => {
-                    return /^\d{1,8}$/.test(value) || 'Должны быть цифры #### до 4';
+                    return /^\d{1,8}$/.test(value) || 'Должна быть цифра до 8 знаков';
 
                 },
                 counter: value => value.length <= 20 || 'Max 20 characters',
@@ -174,9 +174,9 @@ export default {
 
             },
             customName: '',
-            customLat: '',
-            customLon: '',
-            customHeigth: '',
+            customLat: 0,
+            customLon: 0,
+            customHeight: 0,
         };
     },
     mounted() {
@@ -191,7 +191,8 @@ export default {
                     this.customName = newValue[0].label;
                     this.customLat = newValue[0].lat;
                     this.customLon = newValue[0].lon;
-                    this.customHeigth = newValue[0].heigth;
+                    this.customHeight = newValue[0].heigth;
+                    console.log(this.customHeight,'this.customHeight');
                     ///this.getWeather(); // Вызываем getWeather при изменении первого элемента
                // }
             },
@@ -213,7 +214,7 @@ export default {
         },
         getFirstElevation() {
             if (this.selectedLocations.length > 0) {
-                return this.selectedLocations[0].heigth || 0;
+                return parseInt(this.selectedLocations[0].heigth) || 0;
             }
             return 0;
         },
@@ -234,7 +235,8 @@ export default {
                 const response = await api.downloadLocations();
                 this.locations = response.data;
                 if (this.locations.length > 0) {
-                    this.selectedLocations[0] = this.locations[0].value;
+                    const location = this.locations.find(item => item.title.includes('Ставрополь'));
+                    this.selectedLocations[0] = location.value;
                     this.getWeather();
                     this.locations.sort((a, b) => {
                         if (a.title < b.title) return -1; // a идет перед b
@@ -244,7 +246,7 @@ export default {
                     // this.customName = this.selectedLocations[0].label;
                     // this.customLat = this.selectedLocations[0].lat;
                     // this.customLon = this.selectedLocations[0].lon;
-                    // this.customHeigth = this.selectedLocations[0].heigth;
+                    // this.customHeight = this.selectedLocations[0].heigth;
 
                 }
             } catch (error) {
@@ -279,18 +281,19 @@ export default {
         updateCoords(coords) {
             this.customLat = coords.lat;
             this.customLon = coords.lng;
-            this.customHeigth = coords.height;
+            this.customHeight = coords.height;
         },
         async getCustomWeather() {
             const { valid } = await this.$refs.customForm.validate();
             if (!valid) {
                 return;
             }
+            console.log('custom',this.customHeight);
             const custom = {
                 "title": this.customName,
                 "value": {
                     "label": this.customName,
-                    "height": this.customHeigth || 0,
+                    "heigth": parseInt(this.customHeight) || 0,
                     "lat": this.customLat,
                     "lon": this.customLon,
                 }
@@ -298,8 +301,9 @@ export default {
 
             this.locations.push(custom);
             this.customName = '';
-            this.customLat = '';
-            this.customLon = '';
+            this.customLat = 0;
+            this.customLon = 0;
+            this.customHeight = 0;
 
             // Вывод сообщения об успешном добавлении (опционально)
             this.addNotification('Локация успешно добавлена!', 'success');

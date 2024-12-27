@@ -94,7 +94,7 @@ export default {
         formatHpa(hPa) {
                 const height = this.selectedLocations[0].heigth;
                
-                const barometricStep = 8;
+                const barometricStep = 10;
                 const pressureChange = height / barometricStep;
                 const pressure = parseFloat(((hPa - pressureChange) * 0.75006375541921).toFixed(0));
                 return pressure;
