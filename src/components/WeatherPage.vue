@@ -15,8 +15,8 @@
                     <v-row>
                         <v-col cols="12" md="12" v-for="(location, index) in selectedLocations" :key="index">
                             <v-autocomplete v-if="locations.length > 0" v-model="selectedLocations[index]"
-                                :items="locations" label="Выберите место" required item-text="title" item-value="value"
-                                variant="outlined" hide-details density="comfortable" :rules="[rules.required]"
+                                :items="locations" label="Выберите место" required item-text="title" item-value="value" 
+                                variant="outlined" hide-details density="compact" :rules="[rules.required]"
                                 :search-input.sync="search" @update:search-input="onSearch" clearable>
                                 <template v-slot:selection="{ item }">
                                     <div>{{ item ? item.title : 'Выберите место' }}</div>
@@ -192,7 +192,6 @@ export default {
                 this.customLat = newValue[0].lat;
                 this.customLon = newValue[0].lon;
                 this.customHeight = newValue[0].heigth;
-                console.log(this.customHeight, 'this.customHeight');
                 ///this.getWeather(); // Вызываем getWeather при изменении первого элемента
                 // }
             },
@@ -298,10 +297,11 @@ export default {
                 }
             };
 
-            const location = this.locations.find(item => item.title === this.customName);
+            const indx = this.locations.findIndex(item => item.title === custom.title);
 
-            if (location) {
-                location.value = custom.value;
+            if (indx !== -1) {
+               this.locations.splice(indx, 1, custom);
+               this.selectedLocations[0] = this.locations[indx].value;
             } else {
                 this.locations.push(custom);
             }
