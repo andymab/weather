@@ -92,7 +92,7 @@ export default {
             Highcharts.chart(this.$refs.weatherChart, this.chartOptions);
         },
         formatHpa(hPa) {
-                const height = this.selectedLocations[0].heigth;
+                const height = this.selectedLocations[0].elevation;
                
                 const barometricStep = 10;
                 const pressureChange = height / barometricStep;
@@ -151,25 +151,25 @@ export default {
                     
 
                     this.seriesTemperature.push({
-                        name: `Температура (°C) - ${this.selectedLocations[index].label}`,
+                        name: `Температура (°C) - ${this.selectedLocations[index].title}`,
                         data: seriesTemperature,
                     });
 
                     this.seriesPressure.push({
-                        name: `Давление (мм рт. ст.) - ${this.selectedLocations[index].label}`,
+                        name: `Давление (мм рт. ст.) - ${this.selectedLocations[index].title}`,
                         data: seriesPressure,
                     });
 
 
 
                     this.seriesHumidity.push({
-                        name: `Влажность (%) - ${this.selectedLocations[index].label}`,
+                        name: `Влажность (%) - ${this.selectedLocations[index].title}`,
 
                         data: seriesHumidity,
                     });
 
                     this.seriesWindSpeed.push({
-                        name: `Ветер (м/с) - ${this.selectedLocations[index].label}`,
+                        name: `Ветер (м/с) - ${this.selectedLocations[index].title}`,
 
                         data: seriesWindSpeed,
                     });
