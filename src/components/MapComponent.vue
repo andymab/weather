@@ -1,7 +1,7 @@
 vue
 <template>
     <div style="position: relative;">
-        <v-btn rounded="0" class="text-white " width="380px" style="position:absolute; right:0; z-index:2000"
+        <v-btn rounded="0" class="text-white " :width="$vuetify.display.xs ? '420px' : '380px'" style="position:absolute; right:0; z-index:2000"
             color="light-green" @click="togglePanel">
             Настройки маршрута
             <v-icon :icon="ispanelVisible ? 'mdi-chevron-up' : 'mdi-chevron-down'" end></v-icon>
@@ -66,7 +66,7 @@ vue
 
                     <div class="d-flex justify-space-around">
                         <div class="d-flex">
-                            <v-icon v-if="isUserAuth" size="x-large" @click="openSavedRoutes"
+                            <v-icon  size="x-large" @click="openSavedRoutes"
                                 v-tooltip.bottom="`Сохраненые в сети маршруты`"
                                 class="ma-2 text-teal-lighten-3">mdi-web</v-icon>
                             <v-icon size="x-large" @click="loadRouteGPX" v-tooltip.bottom="`Загрузить маршрут (GPX)`"
@@ -119,7 +119,7 @@ vue
             </v-card>
         </v-dialog>
 
-        <UploadDialogPage v-if="isUserAuth" ref="UploadDialogPage" :route="routesLocation" :features="features"
+        <UploadDialogPage  ref="UploadDialogPage" :route="routesLocation" :features="features"
             :elevations="elevationsLocation" @updateLoaded="updateLoaded" />
 
     </div>
@@ -141,7 +141,7 @@ vue
     import ElevationChart from './MapComponent/ElevationChart.vue';
     import Notification from './Notification.vue';
     import UploadDialogPage from '../Auth/UploadPage.vue';
-    import { mapGetters } from 'vuex';
+
 
 
     import axios from 'axios';
@@ -211,7 +211,7 @@ vue
             };
         },
         computed: {
-            ...mapGetters(['isUserAuth', 'isUserAdmin']),
+
             distance() {
                 if (this.autotrackPropertys.summary) {
                     return `${(this.autotrackPropertys.summary.distance / 1000).toFixed(2)} км`;

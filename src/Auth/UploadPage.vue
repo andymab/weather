@@ -6,10 +6,10 @@
                     <div class="d-flex">
                         <span class="headline">Сохраненные маршруты</span>
 
-                        <v-icon size="x-small" @click="openCreateDialog" v-tooltip.bottom="`Создать новую директорию`"
+                        <v-icon v-if="isUserAuth" size="x-small" @click="openCreateDialog" v-tooltip.bottom="`Создать новую директорию`"
                             class="ma-2 text-teal-lighten-3">mdi-plus-circle-outline </v-icon>
 
-                        <v-icon size="x-small" @click="isdialogFileName = true"
+                        <v-icon  v-if="isUserAuth" size="x-small" @click="isdialogFileName = true"
                             v-tooltip.bottom="`Выгрузить маршрут с высотами (JSON)`"
                             class="ma-2 text-teal-lighten-3">mdi-tray-arrow-down </v-icon>
 
@@ -21,10 +21,10 @@
 
                 </v-card-title>
 
-                <v-card-text>
-                    <v-container fluid class="d-flex flex-column align-center justify-center">
-                        <v-row class="flex-grow-1 w-100">
-                            <v-col v-for="(dir, index) in directories" :key="index" cols="12" md="3">
+                <v-card-text class="pa-0">
+                    <v-container fluid class="d-flex flex-column align-center justify-center px-0 py-3">
+                        <v-row class="flex-grow-1 w-100 ">
+                            <v-col v-for="(dir, index) in directories" :key="index" cols="12" md="3" class="pa-0 ">
                                 <div class="d-flex justify-center align-start flex-column">
                                     <v-card flat @click="toggleDirectory(dir)"
                                         class="pa-3 w-100 d-flex align-center bg-grey-lighten-5" outlined
@@ -37,7 +37,7 @@
 
                                         <div style="font-size: 12px; color: gray;">{{ dir.title }}</div>
                                         <v-spacer></v-spacer>
-                                        <v-icon size="16" @click.stop="confirmDeleteDirectory(dir)"
+                                        <v-icon  v-if="isUserAuth" size="16" @click.stop="confirmDeleteDirectory(dir)"
                                             color="grey-darken-3">
                                             mdi-close
                                         </v-icon>
@@ -64,7 +64,7 @@
                                                         </div>
                                                         <v-spacer> </v-spacer>
 
-                                                        <v-icon size="16" @click.stop="confirmDeleteDirectory(subDir)"
+                                                        <v-icon  v-if="isUserAuth" size="16" @click.stop="confirmDeleteDirectory(subDir)"
                                                             color="grey-darken-3">
                                                             mdi-close
                                                         </v-icon>
@@ -87,7 +87,7 @@
 
                                                                     <v-spacer> </v-spacer>
 
-                                                                    <v-icon size="16"
+                                                                    <v-icon  v-if="isUserAuth" size="16"
                                                                         @click.stop="confirmDeleteFile(file)"
                                                                         color="grey-darken-3">
                                                                         mdi-close
@@ -188,6 +188,7 @@
     import api from './api';
     import Notification from '../components/Notification.vue';
     import axios from "axios";
+    import { mapGetters } from 'vuex';
 
     export default {
         name: 'UploadPage',
@@ -224,6 +225,9 @@
                 selectedDir: null,
                 selectedFile: null,
             }
+        },
+        computed:{
+            ...mapGetters(['isUserAuth', 'isUserAdmin']),
         },
         mounted() {
             this.loadDirectories();

@@ -17,7 +17,7 @@
                     <div v-if="$vuetify.display.xs">
                         <div class="d-flex align-center">
 
-                            <span class="text-wrap">Выберите точку</span>
+                            <span class="text-wrap px-4">Выберите точку</span>
 
 
                             <v-spacer></v-spacer>
