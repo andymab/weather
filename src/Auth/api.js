@@ -34,6 +34,26 @@ export default {
       locations: locations,
     });
   },
+  //// SavedRoute
+  downloadSavedRoute(){
+    return apiClient.get(`/download-routes`);
+  },
+  createDirectory(dir){
+    return apiClient.post(`/create-directory`,dir);
+  },
+  deleteDirectory(dir){
+    return apiClient.delete(`/delete-directory`,dir);
+  },
+  uploadRoute(data) {
+    return apiClient.post(`/upload-route`, data);
+  },
+  downloadFileRoute(url) {
+    return apiClient.post(`/download-file-route`,{url});
+  },
+  deleteFileRoute(url) {
+    return apiClient.delete(`/delete-file-route`,{ params: { url } });
+  },
+  //// \SavedRoute
 
   ///системные по пользователю
   getBaseUrl() {

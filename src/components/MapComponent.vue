@@ -1,19 +1,12 @@
 vue
 <template>
     <div style="position: relative;">
-        <v-btn rounded="0" class="text-white " width="380px" style="position:absolute; right:0; z-index:2000"
+        <v-btn rounded="0" class="text-white " :width="$vuetify.display.xs ? '420px' : '380px'" style="position:absolute; right:0; z-index:2000"
             color="light-green" @click="togglePanel">
             Настройки маршрута
             <v-icon :icon="ispanelVisible ? 'mdi-chevron-up' : 'mdi-chevron-down'" end></v-icon>
         </v-btn>
-        <!-- <v-toolbar flat>
-            <v-toolbar-title>Настройки маршрута <span v-if="route.length > 1">{{ calculateDistance
-                    }}</span></v-toolbar-title>
 
-            <v-btn icon @click="togglePanel">
-                <v-icon>{{ panelVisible ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
-            </v-btn>
-        </v-toolbar> -->
 
         <div v-if="ispanelVisible" class="settings-panel">
             <!-- <v-card width="360px"> -->
@@ -48,7 +41,6 @@ vue
                             v-tooltip.bottom="`Получить погоду`" class="ma-2 " disabled
                             :class="{ 'text-green-accent-3': isWeathers, ' grey-lighten-2 ': !isWeathers }">mdi-weather-partly-cloudy</v-icon>
 
-
                     </div>
 
                     <div v-if="autotrackPropertys.summary || (istracks && markers.length > 1)">
@@ -74,6 +66,9 @@ vue
 
                     <div class="d-flex justify-space-around">
                         <div class="d-flex">
+                            <v-icon  size="x-large" @click="openSavedRoutes"
+                                v-tooltip.bottom="`Сохраненые в сети маршруты`"
+                                class="ma-2 text-teal-lighten-3">mdi-web</v-icon>
                             <v-icon size="x-large" @click="loadRouteGPX" v-tooltip.bottom="`Загрузить маршрут (GPX)`"
                                 class="ma-2 text-teal-lighten-3">mdi-briefcase-upload-outline</v-icon>
                             <v-icon size="x-large" @click="openDialogFileName(('saveRouteGPX'))"
@@ -123,6 +118,10 @@ vue
                 </v-card-actions>
             </v-card>
         </v-dialog>
+
+        <UploadDialogPage  ref="UploadDialogPage" :route="routesLocation" :features="features"
+            :elevations="elevationsLocation" @updateLoaded="updateLoaded" />
+
     </div>
 </template>
 
@@ -141,6 +140,7 @@ vue
     import SelectLayer from './MapComponent/SelectLayer.vue';
     import ElevationChart from './MapComponent/ElevationChart.vue';
     import Notification from './Notification.vue';
+    import UploadDialogPage from '../Auth/UploadPage.vue';
 
 
 
@@ -149,7 +149,7 @@ vue
     export default {
         name: 'MapComponent',
         components: {
-            TrackMode, Notification, SelectLayer, ElevationChart,
+            TrackMode, Notification, SelectLayer, ElevationChart, UploadDialogPage
         },
         emits: ['changeMode', 'updateCoords'],
         props: {
@@ -211,6 +211,7 @@ vue
             };
         },
         computed: {
+
             distance() {
                 if (this.autotrackPropertys.summary) {
                     return `${(this.autotrackPropertys.summary.distance / 1000).toFixed(2)} км`;
@@ -262,6 +263,9 @@ vue
             this.initializeMap();
         },
         methods: {
+            openSavedRoutes() {
+                this.$refs.UploadDialogPage.openDialogMain();
+            },
             clearMapEntities() {
                 this.markers.forEach(marker => {
                     this.map.removeLayer(marker);
@@ -303,16 +307,21 @@ vue
 
                 this.map.on('click', (e) => {
                     const { lat, lng } = e.latlng;
-                    console.log(lat, lng, 'lat', 'lon');
+                   // console.log(lat, lng, 'lat', 'lon');
                     if (!this.istracks && this.markers.length === 0) {
                         //стоит получить также высоту поверхности
                         this.addMarker(lat, lng);
-                        this.getElevations();
+
+                        const request_status = this.getElevations();
+
+                        const latitude = lat.toFixed(5);
+                        const longitude = lng.toFixed(5);
 
                         setTimeout(() => {
                             if (this.elevations.length > 0) {
-                                console.log('this.elevations[0]', this.elevations[0])
-                                this.$emit('updateCoords', { lat, lng, height: this.elevations[0] });
+                                this.$emit('updateCoords', { latitude, longitude, elevation: this.elevations[0] });
+                            } else {
+                                this.clearMapEntities();
                             }
                         }, 1000);
 
@@ -600,6 +609,15 @@ vue
                 const blob = new Blob([jsonData], { type: "application/json" }, null, 2);
                 saveAs(blob, `${this.trackName}.json`);
             },
+            updateLoaded(jsonData) {
+              //  console.log(jsonData,'jsonData')
+                //const jsonData = JSON.parse(contents);
+                this.routesLocation = jsonData.location;
+                this.elevationsLocation = jsonData.elevation;
+                this.features = jsonData.features;
+                this.updateRoute(jsonData.location);
+
+            },
             loadRouteElevation() {
                 const input = document.createElement('input');
                 input.type = 'file';
@@ -611,12 +629,8 @@ vue
                     reader.onload = (e) => {
                         const contents = e.target.result;
                         try {
+                            this.updateLoaded(JSON.parse(contents));
 
-                            const jsonData = JSON.parse(contents);
-                            this.routesLocation = jsonData.location;
-                            this.elevationsLocation = jsonData.elevation;
-                            this.features = jsonData.features;
-                            this.updateRoute(jsonData.location);
 
                             //вот здесь сразу запустить отрисовку
                         } catch (error) {
@@ -885,9 +899,11 @@ vue
                     .then(response => {
                         this.elevationsLocation = response.data;
                         this.updateElevations(response.data);
+                        return true;
                     })
                     .catch(error => {
                         console.error("Ошибка при получении данных о высоте:", error);
+                        return false;
                     });
             },
             highlightRoutePoint(point) {
@@ -901,10 +917,10 @@ vue
 
             },
             plotElevationProfile() {  ///подготовка к постороению графика высот
-                console.log('this.routesLocation', this.routesLocation);
+               // console.log('this.routesLocation', this.routesLocation);
                 if (this.routesLocation && (this.routesLocation.features || this.routesLocation.routes)) {
                     const points = this.calculateDistancesAndTimes();
-                    console.log('points', points);
+                  //  console.log('points', points);
                     if (points.length > 0) {
                         this.elevationData = points;
                     }
@@ -953,37 +969,37 @@ vue
                 }
                 return data;
 
-            //     calculateTimeAndDistance() {
-            //     return false;
-            //     //points, V_base, k
-            //     let totalDistance = 0;
-            //     let totalTime = 0;
+                //     calculateTimeAndDistance() {
+                //     return false;
+                //     //points, V_base, k
+                //     let totalDistance = 0;
+                //     let totalTime = 0;
 
-            //     for (let i = 0; i < points.length - 1; i++) {
-            //         const d = points[i + 1].horizontalDistance; // Горизонтальное расстояние между точками
-            //         const h = points[i + 1].height - points[i].height; // Разница в высоте
+                //     for (let i = 0; i < points.length - 1; i++) {
+                //         const d = points[i + 1].horizontalDistance; // Горизонтальное расстояние между точками
+                //         const h = points[i + 1].height - points[i].height; // Разница в высоте
 
-            //         // Расчет реального расстояния
-            //         const d_real = Math.sqrt(d * d + h * h);
+                //         // Расчет реального расстояния
+                //         const d_real = Math.sqrt(d * d + h * h);
 
-            //         // Расчет угла наклона
-            //         const alpha = Math.atan(h / d);
+                //         // Расчет угла наклона
+                //         const alpha = Math.atan(h / d);
 
-            //         // Учет скорости
-            //         const V_actual = V_base * (1 - k * alpha);
+                //         // Учет скорости
+                //         const V_actual = V_base * (1 - k * alpha);
 
-            //         // Расчет времени
-            //         const time = d_real / V_actual;
+                //         // Расчет времени
+                //         const time = d_real / V_actual;
 
-            //         totalDistance += d_real;
-            //         totalTime += time;
-            //     }
+                //         totalDistance += d_real;
+                //         totalTime += time;
+                //     }
 
-            //     return {
-            //         totalDistance,
-            //         totalTime
-            //     };
-            // }
+                //     return {
+                //         totalDistance,
+                //         totalTime
+                //     };
+                // }
             },
             calculateDistancesAndTimes() {
                 if (this.routesLocation.length === 0) {
