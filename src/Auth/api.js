@@ -35,7 +35,7 @@ export default {
     });
   },
 
-///системные по пользователю
+  ///системные по пользователю
   getBaseUrl() {
     return config.baseURL;
   },
@@ -99,4 +99,19 @@ export default {
     return apiClient.post(`/profile`, updatedData, config);
   },
 
+  getReminders() {
+    //получение напоминалок
+    return apiClient.get(`/reminders`);
+  },
+  addReminder(data) {
+    //добавление напоминалок
+    return apiClient.post(`/reminders`, data);
+  },
+  updateReminder(id, upData){
+    //изменение напоминалки
+    return apiClient.put(`/reminders/${id}`, upData);
+  },
+  deleteReminder(id){
+    return apiClient.delete(`/reminders/${id}`);
+  },
 };

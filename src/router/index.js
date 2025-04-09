@@ -5,6 +5,9 @@ import Profile from "../Auth/Profile.vue";
 import Login from "../Auth/Login.vue";
 
 import Users from "../Auth/Admin/Users.vue";
+import Reminders from "../Auth/Admin/Reminders.vue";
+
+
 
 const routes = [
   { path: "/", component: WeatherPage },
@@ -15,6 +18,7 @@ const routes = [
     meta: { allowedRoles: ["user", "uploader", "admin"] },
   },
   { path: "/admin/users", component: Users, meta: { allowedRoles: ["admin"] } },
+  { path: "/admin/reminders", component: Reminders, meta: { allowedRoles: ["admin"] } },
 ];
 
 const router = createRouter({

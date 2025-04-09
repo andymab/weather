@@ -24,6 +24,12 @@ export default {
                     to: '/admin/users'
                 },
                 {
+                    title: 'Напоминалка Телеграмм',
+                    icon: 'mdi-account',
+                    permission: 'isAdmin',
+                    to: '/admin/reminders'
+                },
+                {
                     title: 'Выйти',
                     icon: 'mdi-logout',
                     permission: 'isUserAuth',

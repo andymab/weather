@@ -20,10 +20,12 @@ vue
         </v-toolbar>
       </template>
 
+      <!-- eslint-disable-next-line vue/valid-v-slot -->
       <template v-slot:item.payment_time="{ item }">
       {{ formatPaymentTime(item.payment_time) }}
      </template>
 
+     <!-- eslint-disable-next-line vue/valid-v-slot -->
       <template v-slot:item.actions="{ item }">
         <v-btn @click="editUser(item)">Редактировать</v-btn>
       </template>
@@ -73,7 +75,6 @@ export default {
       } catch (error) {
         console.error("Ошибка при загрузке roles:", error);
       }
-
   },
   methods: {
     formatPaymentTime(dateString) {
