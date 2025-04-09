@@ -137,16 +137,23 @@ const openEditDialog = (reminder) => {
 
 const saveReminder = async () => {
     try {
+        // Форматируем час с ведущим нулём
         const formattedHour = form.value.hour.toString().padStart(2, '0')
-        const reminderTime = new Date(`${form.value.dateString}T${formattedHour}:00:00`)
-
+        
+        // Создаём объект Date из выбранной даты
+        const selectedDate = new Date(form.value.date)
+        
+        // Устанавливаем часы и минуты
+        selectedDate.setHours(form.value.hour)
+        selectedDate.setMinutes(0)
+        selectedDate.setSeconds(0)
+        
         const reminderData = {
             title: form.value.title,
             description: form.value.description,
-            reminder_time: reminderTime.toISOString(),
+            reminder_time: selectedDate.toISOString(),
             repeat: form.value.repeat
         }
-
 
         if (editingId.value) {
             await api.updateReminder(editingId.value, reminderData)
@@ -158,7 +165,7 @@ const saveReminder = async () => {
         fetchReminders()
     } catch (error) {
         console.error('Ошибка при сохранении напоминания:', error)
-        alert('Ошибка при сохранении: ' + error.message)
+        alert('Ошибка при сохранении: ' + (error.response?.data?.message || error.message))
     }
 }
 
