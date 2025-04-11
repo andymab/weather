@@ -12,8 +12,12 @@
         <!-- Диалог создания/редактирования -->
         <v-dialog v-model="showDialog" max-width="600">
             <v-card>
-                <v-card-title>
-                    {{ editingId ? 'Редактировать напоминание' : 'Новое напоминание' }}
+                <v-card-title class="d-flex justify-space-between">
+                    <span>{{ editingId ? 'Редактировать напоминание' : 'Новое напоминание' }}</span>
+                    <v-spacer></v-spacer>
+                    <v-btn icon @click="showDialog = false" variant="text" density="compact">
+                        <v-icon>mdi-close</v-icon>
+                    </v-btn>
                 </v-card-title>
                 <v-card-text>
                     <v-form @submit.prevent="saveReminder">
@@ -21,18 +25,24 @@
                             :rules="[v => !!v || 'Обязательное поле']"></v-text-field>
 
                         <v-textarea v-model="form.description" label="Описание" rows="2"></v-textarea>
+                        <v-row>
+                            <v-col>
+                                <v-date-picker v-model="form.date" :min="new Date()" locale="ru" title="Дата" required
+                                    @update:modelValue="handleDateChange"></v-date-picker>
+                            </v-col>
+                            <v-col>
+                                <div class="flex-column">
+                                    <v-text-field v-model="form.hour" label="Час (07-23)" type="number" min="7" max="23"
+                                        :rules="[
+                                            v => !!v || 'Укажите час',
+                                            v => (v >= 7 && v <= 23) || 'Допустимо с 07 до 23'
+                                        ]"></v-text-field>
 
-                        <v-date-picker v-model="form.date" :min="new Date()" locale="ru"
-                            title="Дата" required @update:modelValue="handleDateChange"></v-date-picker>
-
-                        <v-text-field v-model="form.hour" label="Час (09-22)" type="number" min="9" max="22" :rules="[
-                            v => !!v || 'Укажите час',
-                            v => (v >= 9 && v <= 22) || 'Допустимо с 09 до 22'
-                        ]"></v-text-field>
-
-                        <v-select v-model="form.repeat" :items="repeatOptions" item-title="text" item-value="value"
-                            label="Повторение"></v-select>
-
+                                    <v-select v-model="form.repeat" :items="repeatOptions" item-title="text"
+                                        item-value="value" label="Повторение"></v-select>
+                                </div>
+                            </v-col>
+                        </v-row>
                         <v-card-actions>
                             <v-spacer></v-spacer>
                             <v-btn color="error" @click="showDialog = false">Отмена</v-btn>
@@ -44,32 +54,37 @@
         </v-dialog>
 
         <!-- Список напоминаний -->
-        <v-list lines="two">
-            <v-list-item v-for="reminder in sortedReminders" :key="reminder.id" @click="openEditDialog(reminder)">
-                <template v-slot:prepend>
-                    <v-icon :color="getReminderColor(reminder)">mdi-alarm</v-icon>
-                </template>
+        <v-row>
+            <v-col cols="12">
+                <v-list lines="two">
+                    <v-list-item v-for="reminder in sortedReminders" :key="reminder.id"
+                        @click="openEditDialog(reminder)">
+                        <template v-slot:prepend>
+                            <v-icon :color="getReminderColor(reminder)">mdi-alarm</v-icon>
+                        </template>
 
-                <v-list-item-title>{{ reminder.title }}</v-list-item-title>
-                <v-list-item-subtitle>
-                    {{ formatDateTime(reminder.reminder_time) }}
-                    <v-chip v-if="reminder.repeat !== 'none'" size="x-small" class="ml-2"
-                        :color="getRepeatColor(reminder.repeat)">
-                        {{ getRepeatText(reminder.repeat) }}
-                    </v-chip>
-                </v-list-item-subtitle>
+                        <v-list-item-title>{{ reminder.title }}</v-list-item-title>
+                        <v-list-item-subtitle>
+                            {{ formatDateTime(reminder.reminder_time) }}
+                            <v-chip v-if="reminder.repeat !== 'none'" size="x-small" class="ml-2"
+                                :color="getRepeatColor(reminder.repeat)">
+                                {{ getRepeatText(reminder.repeat) }}
+                            </v-chip>
+                        </v-list-item-subtitle>
 
-                <v-list-item-subtitle v-if="reminder.description">
-                    {{ reminder.description }}
-                </v-list-item-subtitle>
+                        <v-list-item-subtitle v-if="reminder.description">
+                            {{ reminder.description }}
+                        </v-list-item-subtitle>
 
-                <template v-slot:append>
-                    <v-btn icon variant="text" color="error" @click.stop="deleteReminder(reminder.id)">
-                        <v-icon>mdi-delete</v-icon>
-                    </v-btn>
-                </template>
-            </v-list-item>
-        </v-list>
+                        <template v-slot:append>
+                            <v-btn icon variant="text" color="error" @click.stop="deleteReminder(reminder.id)">
+                                <v-icon>mdi-delete</v-icon>
+                            </v-btn>
+                        </template>
+                    </v-list-item>
+                </v-list>
+            </v-col>
+        </v-row>
     </v-container>
 </template>
 
@@ -139,15 +154,15 @@ const saveReminder = async () => {
     try {
         // Форматируем час с ведущим нулём
         const formattedHour = form.value.hour.toString().padStart(2, '0')
-        
+
         // Создаём объект Date из выбранной даты
         const selectedDate = new Date(form.value.date)
-        
+
         // Устанавливаем часы и минуты
         selectedDate.setHours(form.value.hour)
         selectedDate.setMinutes(0)
         selectedDate.setSeconds(0)
-        
+
         const reminderData = {
             title: form.value.title,
             description: form.value.description,
