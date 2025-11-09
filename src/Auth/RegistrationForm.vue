@@ -12,17 +12,35 @@
               </div>
               <v-form v-if="isCaptchaVerified" ref="form" v-model="valid" lazy-validation>
 
-                <v-text-field v-model="username" :rules="[rules.required]" label="Имя пользователя"
-                  required></v-text-field>
+                <v-text-field 
+                  v-model="username" 
+                  :rules="[rules.required]" 
+                  label="Имя пользователя"
+                  required
+                ></v-text-field>
 
-                <v-text-field v-model="email" :rules="[rules.required, rules.email]" label="Электронная почта"
-                  required></v-text-field>
+                <v-text-field 
+                  v-model="email" 
+                  :rules="[rules.required, rules.email]" 
+                  label="Электронная почта"
+                  required
+                ></v-text-field>
 
-                <v-text-field v-model="password" :rules="[rules.required, rules.min]" label="Пароль" type="password"
-                  required></v-text-field>
+                <v-text-field 
+                  v-model="password" 
+                  :rules="[rules.required, rules.min]" 
+                  label="Пароль" 
+                  type="password"
+                  required
+                ></v-text-field>
 
-                <v-text-field v-model="confirmPassword" :rules="[rules.required, rules.confirmPassword]"
-                  label="Подтверждение пароля" type="password" required></v-text-field>
+                <v-text-field 
+                  v-model="confirmPassword" 
+                  :rules="[rules.required, rules.confirmPassword]"
+                  label="Подтверждение пароля" 
+                  type="password" 
+                  required
+                ></v-text-field>
 
                 <v-btn @click="submit">Зарегистрироваться</v-btn>
                 <v-btn @click="cancel" color="secondary" class="ml-4">Отмена</v-btn>
@@ -33,14 +51,12 @@
         </v-col>
       </v-row>
     </v-dialog>
-
-
   </v-container>
 </template>
 
 <script>
 import api from "../../api";
-import config from '../../config/env.js';
+import { useAuthStore } from '@/stores/auth';
 
 export default {
   name: 'RegistrationForm',
@@ -53,7 +69,7 @@ export default {
       email: '',
       password: '',
       confirmPassword: '',
-      siteKey: config.recapcha,
+      siteKey: import.meta.env.VITE_RECAPTCHA_SITE_KEY, // Из .env
       rules: {
         required: value => !!value || 'Это поле обязательно',
         email: value => /.+@.+\..+/.test(value) || 'Введите корректный email',
@@ -64,7 +80,7 @@ export default {
   },
   computed: {
     recaptchakey() {
-      return config.recapchaLocal;
+      return import.meta.env.VITE_RECAPTCHA_LOCAL_KEY; // Из .env
     },
   },
   mounted() {
@@ -75,25 +91,30 @@ export default {
     script.async = true;
     script.defer = true;
     document.head.appendChild(script);
+    
     window.vueRecaptchaApiLoaded = () => {
-      window.grecaptcha.render(this.$refs.recaptcha, {
-        sitekey: this.siteKey,
-        callback: this.onCaptchaVerified,
-      });
+      if (window.grecaptcha && this.$refs.recaptcha) {
+        window.grecaptcha.render(this.$refs.recaptcha, {
+          sitekey: this.siteKey,
+          callback: this.onCaptchaVerified,
+        });
+      }
     };
-
   },
   methods: {
     cancel() {
       this.RegistrationDialog = false;
+      this.$router.push('/login'); // Перенаправляем на логин при отмене
     },
+    
     onCaptchaVerified(response) {
       if (response) {
         this.isCaptchaVerified = true;
         window.grecaptcha.reset(); // Reset the widget
       }
     },
-   async submit() {
+    
+    async submit() {
       if (this.$refs.form.validate()) {
         try {
           const response = await api.registration({
@@ -102,33 +123,36 @@ export default {
             password: this.password,
             password_confirmation: this.confirmPassword,
           });
+          
           const data = response.data;
 
           if (data.status === 'success') {
-            this.$refs.form.reset()
+            this.$refs.form.reset();
+            
+            // Используем Pinia store вместо Vuex
+            const authStore = useAuthStore();
             const token = data.api_token;
-            this.$store.dispatch('login', token);
-            this.$store.dispatch('user', data.user);
+            authStore.login(token, data.user);
+            
+            this.$notify.success('Регистрация прошла успешно!');
+            this.$router.push('/');
+            
           } else {
-            console.error('Ошибка при входе:', data.message);
-            this.$store.dispatch('logout');
+            console.error('Ошибка при регистрации:', data.message);
+            this.$notify.error(data.message || 'Ошибка при регистрации');
+            
+            // Используем Pinia store
+            const authStore = useAuthStore();
+            authStore.logout();
           }
         } catch (error) {
           console.error('Ошибка сервера:', error);
-          this.$store.dispatch('logout');
-        } finally {
-          this.$router.push('/');
+          this.$notify.error(error.response?.data?.message || 'Ошибка сервера');
+          
+          // Используем Pinia store
+          const authStore = useAuthStore();
+          authStore.logout();
         }
-
-
-
-        // Отправка данных на сервер
-        console.log('Форма отправлена', {
-          username: this.username,
-          email: this.email,
-          password: this.password,
-        });
-
       }
     },
   },

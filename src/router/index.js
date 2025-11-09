@@ -1,13 +1,11 @@
 import { createRouter, createWebHistory } from "vue-router";
+import { useAuthStore } from '@/stores/auth';
+
 import WeatherPage from "../components/WeatherPage.vue";
-import store from "../Auth/store";
 import Profile from "../Auth/Profile.vue";
 import Login from "../Auth/Login.vue";
-
 import Users from "../Auth/Admin/Users.vue";
 import Reminders from "../Auth/Admin/Reminders.vue";
-
-
 
 const routes = [
   { path: "/", component: WeatherPage },
@@ -15,10 +13,18 @@ const routes = [
   {
     path: "/profile",
     component: Profile,
-    meta: { allowedRoles: ["user", "uploader", "admin"] },
+    meta: { requiresAuth: true, allowedRoles: ["user", "uploader", "admin"] },
   },
-  { path: "/admin/users", component: Users, meta: { allowedRoles: ["admin"] } },
-  { path: "/admin/reminders", component: Reminders, meta: { allowedRoles: ["admin"] } },
+  { 
+    path: "/admin/users", 
+    component: Users, 
+    meta: { requiresAuth: true, allowedRoles: ["admin"] } 
+  },
+  { 
+    path: "/admin/reminders", 
+    component: Reminders, 
+    meta: { requiresAuth: true, allowedRoles: ["admin"] } 
+  },
 ];
 
 const router = createRouter({
@@ -27,17 +33,33 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-  //const token = store.getters.getToken;
-  const userRole = store.getters.getUserRole;
-  if (to.meta.allowedRoles) {
-    if (!to.meta.allowedRoles.includes(userRole)) {
-      next("/login");
-    } else {
-      next();
-    }
-  } else {
-    next();
+  // Получаем store внутри guard'а
+  const authStore = useAuthStore();
+  const userRole = authStore.getUserRole;
+  const isAuthenticated = authStore.isUserAuth;
+
+  // Проверка аутентификации
+  if (to.meta.requiresAuth && !isAuthenticated) {
+    next("/login");
+    return;
   }
+
+  // Проверка ролей
+  if (to.meta.allowedRoles) {
+    if (!userRole || !to.meta.allowedRoles.includes(userRole)) {
+      // Если пользователь не авторизован - на логин, иначе на главную
+      next(isAuthenticated ? "/" : "/login");
+      return;
+    }
+  }
+
+  // Если пользователь авторизован и пытается зайти на логин - редирект на главную
+  if (to.path === '/login' && isAuthenticated) {
+    next("/");
+    return;
+  }
+
+  next();
 });
 
 export default router;

@@ -6,10 +6,11 @@
                     <div class="d-flex">
                         <span class="headline">Сохраненные маршруты</span>
 
-                        <v-icon v-if="isUserAuth" size="x-small" @click="openCreateDialog" v-tooltip.bottom="`Создать новую директорию`"
+                        <v-icon v-if="isUserAuth" size="x-small" @click="openCreateDialog"
+                            v-tooltip.bottom="`Создать новую директорию`"
                             class="ma-2 text-teal-lighten-3">mdi-plus-circle-outline </v-icon>
 
-                        <v-icon  v-if="isUserAuth" size="x-small" @click="isdialogFileName = true"
+                        <v-icon v-if="isUserAuth" size="x-small" @click="isdialogFileName = true"
                             v-tooltip.bottom="`Выгрузить маршрут с высотами (JSON)`"
                             class="ma-2 text-teal-lighten-3">mdi-tray-arrow-down </v-icon>
 
@@ -31,13 +32,13 @@
                                         :class="{ 'bg-grey-lighten-3': openedDirectory === dir }">
 
                                         <v-icon size="48" class="mr-2"
-                                            :color="openedDirectory === dir ? 'yellow-darken-3' :'yellow-darken-2'">
+                                            :color="openedDirectory === dir ? 'yellow-darken-3' : 'yellow-darken-2'">
                                             {{ openedDirectory === dir ? 'mdi-folder-open' : 'mdi-folder' }}
                                         </v-icon>
 
                                         <div style="font-size: 12px; color: gray;">{{ dir.title }}</div>
                                         <v-spacer></v-spacer>
-                                        <v-icon  v-if="isUserAuth" size="16" @click.stop="confirmDeleteDirectory(dir)"
+                                        <v-icon v-if="isUserAuth" size="16" @click.stop="confirmDeleteDirectory(dir)"
                                             color="grey-darken-3">
                                             mdi-close
                                         </v-icon>
@@ -54,9 +55,9 @@
                                                     <div class="d-flex flex-start align-center">
 
                                                         <v-icon size="24" class="mr-2"
-                                                            :color="openedSubDirectories === subDir ? 'yellow-darken-3' :'yellow-darken-2'">
+                                                            :color="openedSubDirectories === subDir ? 'yellow-darken-3' : 'yellow-darken-2'">
                                                             {{ openedSubDirectories === subDir ? 'mdi-folder-open' :
-                                                            'mdi-folder' }}
+                                                                'mdi-folder' }}
                                                         </v-icon>
 
 
@@ -64,7 +65,8 @@
                                                         </div>
                                                         <v-spacer> </v-spacer>
 
-                                                        <v-icon  v-if="isUserAuth" size="16" @click.stop="confirmDeleteDirectory(subDir)"
+                                                        <v-icon v-if="isUserAuth" size="16"
+                                                            @click.stop="confirmDeleteDirectory(subDir)"
                                                             color="grey-darken-3">
                                                             mdi-close
                                                         </v-icon>
@@ -74,7 +76,7 @@
                                                         class="bg-grey-lighten-4 w-100">
                                                         <v-list-item-group>
                                                             <v-list-item v-for="(file, fileIndex) in subDir.files"
-                                                                :key="`file-`+fileIndex" density="compact"
+                                                                :key="`file-` + fileIndex" density="compact"
                                                                 @click="uploadFile(file.url)" class="bg-grey-lighten-4">
                                                                 <div class="d-flex align-center">
                                                                     <v-icon size="24" class="mr-2"
@@ -82,12 +84,12 @@
                                                                         mdi-file-tree-outline
                                                                     </v-icon>
                                                                     <div style="font-size: 12px; color: gray;">
-                                                                        {{file.title }}</div>
+                                                                        {{ file.title }}</div>
 
 
                                                                     <v-spacer> </v-spacer>
 
-                                                                    <v-icon  v-if="isUserAuth" size="16"
+                                                                    <v-icon v-if="isUserAuth" size="16"
                                                                         @click.stop="confirmDeleteFile(file)"
                                                                         color="grey-darken-3">
                                                                         mdi-close
@@ -185,263 +187,271 @@
 </template>
 
 <script>
-    import api from './api';
-    import Notification from '../components/Notification.vue';
-    import axios from "axios";
-    import { mapGetters } from 'vuex';
+import api from './api';
+import Notification from '../components/Notification.vue';
+import axios from "axios";
+import { useAuthStore } from '@/stores/auth';
 
-    export default {
-        name: 'UploadPage',
-        components: {
-            Notification
+export default {
+    name: 'UploadPage',
+    components: {
+        Notification
+    },
+    props: {
+        route: {
+            type: Array,
         },
-        props: {
-            route: {
-                type: Array,
-            },
-            elevations: {
-                type: Array,
-            },
-            features: {
-                type: Array,
-            },
+        elevations: {
+            type: Array,
         },
-        data() {
-            return {
-                dialogMain: false,
-                trackName: '',
-                newDirName: '',
-                directories: [{
-                    title: 'Директория 1',
-                    directories: [],
-                    files: []
-                }],
-                isdialogFileName: false,
-                openedDirectory: null,
-                openedSubDirectories: null,
-                dialog: false,
-                dialogDeleteDir: false,
-                dialogDeleteFile: false,
-                selectedDir: null,
-                selectedFile: null,
+        features: {
+            type: Array,
+        },
+    },
+    data() {
+        return {
+            dialogMain: false,
+            trackName: '',
+            newDirName: '',
+            directories: [{
+                title: 'Директория 1',
+                directories: [],
+                files: []
+            }],
+            isdialogFileName: false,
+            openedDirectory: null,
+            openedSubDirectories: null,
+            dialog: false,
+            dialogDeleteDir: false,
+            dialogDeleteFile: false,
+            selectedDir: null,
+            selectedFile: null,
+        }
+    },
+    computed: {
+        // Заменяем Vuex mapGetters на Pinia computed свойства
+        isUserAuth() {
+            const authStore = useAuthStore();
+            return authStore.isUserAuth;
+        },
+        isUserAdmin() {
+            const authStore = useAuthStore();
+            return authStore.isUserAdmin;
+        }
+    },
+    mounted() {
+        this.loadDirectories();
+    },
+    methods: {
+        async uploadFile(url) {
+            const result = await api.downloadFileRoute(url);
+            this.dialogMain = false;
+            this.$emit('updateLoaded', result.data);
+        },
+        message(message, status) {
+            status = typeof status === 'undefined' ? 'success' : status === true ? 'success' : 'error';
+            this.$refs.notification.notify(message, status);
+        },
+        async executeSave() {
+            this.isdialogFileName = false;
+            const directory_name = this.openedSubDirectories ? this.openedSubDirectories : this.openedDirectory;
+            const parent_directory = this.openedSubDirectories ? this.openedDirectory : null;
+            const file_name = this.trackName;
+            const route = { location: this.route, elevation: this.elevations, features: this.features };
+
+            if ((directory_name || parent_directory) && file_name) {
+                const result = await api.uploadRoute({ route, directory_name: directory_name.title, parent_directory: parent_directory?.title, file_name });
+
+                if (this.openedSubDirectories) {
+                    this.openedSubDirectories.files.push(result.data);
+                } else {
+                    this.openedDirectory.files.push(result.data);
+                }
+
+            } else {
+                this.message('Введите имя файла или выберите директорию', false);
+                console.error('нет открытых директорий или наименования файла');
+
             }
         },
-        computed:{
-            ...mapGetters(['isUserAuth', 'isUserAdmin']),
+
+        openDialogMain() {
+            this.dialogMain = true;
         },
-        mounted() {
-            this.loadDirectories();
+        closeDialogMain() {
+            this.dialogMain = false;
         },
-        methods: {
-            async uploadFile(url) {
-                const result = await api.downloadFileRoute(url);
-                this.dialogMain = false;
-                this.$emit('updateLoaded', result.data);
-            },
-            message(message, status) {
-                status = typeof status === 'undefined' ? 'success' : status === true ? 'success' : 'error';
-                this.$refs.notification.notify(message, status);
-            },
-            async executeSave() {
-                this.isdialogFileName = false;
-                const directory_name = this.openedSubDirectories ? this.openedSubDirectories : this.openedDirectory;
-                const parent_directory = this.openedSubDirectories ? this.openedDirectory : null;
-                const file_name = this.trackName;
-                const route = { location: this.route, elevation: this.elevations, features: this.features };
+        // Метод для сохранения данных в виде JSON-файла на сервере
+        async saveData() {
+            try {
+                const jsonData = JSON.parse(this.dataToSave); // Преобразуем строку в объект
 
-                if ((directory_name || parent_directory) && file_name) {
-                    const result = await api.uploadRoute({ route, directory_name: directory_name.title, parent_directory: parent_directory.title, file_name });
+                await axios.post('/api/save-data', {
+                    data: jsonData,
+                    directory_name: this.openedDirectory?.title || '', // Имя открытой директории или пустая строка
+                    parent_directory: this.openedDirectory?.parent || '' // Имя родительской директории или пустая строка
+                });
+            } catch (error) {
+                console.error('Ошибка сохранения данных:', error);
+            }
+        },
+        async loadDirectories() {
+            try {
+                const response = await api.downloadSavedRoute();
+                this.directories = response.data; // Установите загруженные данные в переменную directories
+            } catch (error) {
+                console.error('Ошибка загрузки директорий:', error);
+            }
+        },
+        openCreateDialog() {
+            this.dialog = true;
+        },
+        toggleDirectory(dir) {
+            this.openedDirectory = this.openedDirectory === dir ? null : dir;
+        },
 
-                    if (this.openedSubDirectories) {
-                        this.openedSubDirectories.files.push(result.data);
-                    } else {
-                        this.openedDirectory.files.push(result.data);
-                    }
+        toggleSubDirectory(subDir) {
+            this.openedSubDirectories = this.openedSubDirectories === subDir ? null : subDir;
 
+            // const dirId = dir.title; // Предполагается, что у вашего каталога есть уникальный идентификатор
+            // if (!this.openedSubDirectories[dirId]) {
+            //     this.openedSubDirectories[dirId] = [];
+            // }
+            // const subDirId = subDir.id; // Предполагается, что у подкаталога есть уникальный идентификатор
+            // const index = this.openedSubDirectories[dirId].indexOf(subDirId);
+            // if (index > -1) {
+            //     this.openedSubDirectories[dirId].splice(index, 1); // Закрываем подкаталог
+            // } else {
+            //     this.openedSubDirectories[dirId].push(subDirId); // Открываем подкаталог
+            // }
+        },
+        confirmCreateDirectory() {
+            if (this.newDirName) {
+                this.createNewDirectory(this.newDirName);
+                this.dialog = false;
+            }
+        },
+        async createNewDirectory(name) {
+            const newDir = { title: name, directories: [], files: [] };
+
+            // Если открыта директория, добавляем новую директорию в нее
+            if (this.openedDirectory) {
+                this.openedDirectory.directories.push(newDir);
+
+                // Отправка запроса на создание директории на сервере
+                await api.createDirectory({
+                    directory_name: name,
+                    parent_directory: this.openedDirectory.title
+                });
+
+            } else {
+                // Если нет открытой директории, добавляем в корень
+                this.directories.push(newDir);
+
+                // Отправка запроса на создание директории на сервере
+                await api.createDirectory({
+                    directory_name: name
+                });
+            }
+
+            this.newDirName = ''; // Сбросить поле ввода
+        },
+        confirmDeleteDirectory(dir) {
+            this.selectedDir = dir;
+            this.dialogDeleteDir = true;
+        },
+        async deleteSelectedDirectory() {
+            try {
+                const parent = this.findParent(this.directories, this.selectedDir);
+                const directory_name = this.selectedDir.title;
+
+                if (parent) {
+                    const parent_directory = parent.title;
+                    await api.deleteDirectory({ data: { directory_name, parent_directory } });
                 } else {
-                    this.message('Введите имя файла или выберите директорию', false);
-                    console.error('нет открытых директорий или наименования файла');
-
+                    await api.deleteDirectory({ data: { directory_name } });
                 }
-            },
 
-            openDialogMain() {
-                this.dialogMain = true;
-            },
-            closeDialogMain() {
-                this.dialogMain = false;
-            },
-            // Метод для сохранения данных в виде JSON-файла на сервере
-            async saveData() {
-                try {
-                    const jsonData = JSON.parse(this.dataToSave); // Преобразуем строку в объект
 
-                    await axios.post('/api/save-data', {
-                        data: jsonData,
-                        directory_name: this.openedDirectory?.title || '', // Имя открытой директории или пустая строка
-                        parent_directory: this.openedDirectory?.parent || '' // Имя родительской директории или пустая строка
-                    });
-                } catch (error) {
-                    console.error('Ошибка сохранения данных:', error);
+                // Удаляем из локального списка
+                if (this.openedDirectory === this.selectedDir) {
+                    this.openedDirectory = null; // Закрыть открытую папку
                 }
-            },
-            async loadDirectories() {
-                try {
-                    const response = await api.downloadSavedRoute();
-                    this.directories = response.data; // Установите загруженные данные в переменную directories
-                } catch (error) {
-                    console.error('Ошибка загрузки директорий:', error);
-                }
-            },
-            openCreateDialog() {
-                this.dialog = true;
-            },
-            toggleDirectory(dir) {
-                this.openedDirectory = this.openedDirectory === dir ? null : dir;
-            },
 
-            toggleSubDirectory(subDir) {
-                this.openedSubDirectories = this.openedSubDirectories === subDir ? null : subDir;
 
-                // const dirId = dir.title; // Предполагается, что у вашего каталога есть уникальный идентификатор
-                // if (!this.openedSubDirectories[dirId]) {
-                //     this.openedSubDirectories[dirId] = [];
-                // }
-                // const subDirId = subDir.id; // Предполагается, что у подкаталога есть уникальный идентификатор
-                // const index = this.openedSubDirectories[dirId].indexOf(subDirId);
-                // if (index > -1) {
-                //     this.openedSubDirectories[dirId].splice(index, 1); // Закрываем подкаталог
-                // } else {
-                //     this.openedSubDirectories[dirId].push(subDirId); // Открываем подкаталог
-                // }
-            },
-            confirmCreateDirectory() {
-                if (this.newDirName) {
-                    this.createNewDirectory(this.newDirName);
-                    this.dialog = false;
-                }
-            },
-            async createNewDirectory(name) {
-                const newDir = { title: name, directories: [], files: [] };
 
-                // Если открыта директория, добавляем новую директорию в нее
-                if (this.openedDirectory) {
-                    this.openedDirectory.directories.push(newDir);
-
-                    // Отправка запроса на создание директории на сервере
-                    await api.createDirectory({
-                        directory_name: name,
-                        parent_directory: this.openedDirectory.title
-                    });
-
+                if (parent) {
+                    parent.directories = parent.directories.filter(d => d !== this.selectedDir);
                 } else {
-                    // Если нет открытой директории, добавляем в корень
-                    this.directories.push(newDir);
-
-                    // Отправка запроса на создание директории на сервере
-                    await api.createDirectory({
-                        directory_name: name
-                    });
+                    this.directories = this.directories.filter(d => d !== this.selectedDir);
                 }
 
-                this.newDirName = ''; // Сбросить поле ввода
-            },
-            confirmDeleteDirectory(dir) {
-                this.selectedDir = dir;
-                this.dialogDeleteDir = true;
-            },
-            async deleteSelectedDirectory() {
-                try {
-                    const parent = this.findParent(this.directories, this.selectedDir);
-                    const directory_name = this.selectedDir.title;
-
-                    if (parent) {
-                        const parent_directory = parent.title;
-                        await api.deleteDirectory({ data: { directory_name, parent_directory } });
-                    } else {
-                        await api.deleteDirectory({ data: { directory_name } });
-                    }
-
-
-                    // Удаляем из локального списка
-                    if (this.openedDirectory === this.selectedDir) {
-                        this.openedDirectory = null; // Закрыть открытую папку
-                    }
-
-
-
-                    if (parent) {
-                        parent.directories = parent.directories.filter(d => d !== this.selectedDir);
-                    } else {
-                        this.directories = this.directories.filter(d => d !== this.selectedDir);
-                    }
-
-                } catch (error) {
-                    console.error('Ошибка удаления директории:', error);
-                } finally {
-                    this.dialogDeleteDir = false;
-                }
-            },
-
-            findParent(directories, dir) {
-                for (const d of directories) {
-                    if (d.directories.includes(dir)) {
-                        return d;
-                    }
-
-                    const found = this.findParent(d.directories, dir);
-
-                    if (found) return found;
-                }
-
-                return null;
-            },
-            findParentFile(directories, selectedFile) {
-                for (const dir of directories) {
-                    if (dir.files.includes(selectedFile)) {
-                        return dir; // Возвращаем родительский каталог
-                    }
-                    // Рекурсивно ищем в подкаталогах
-                    const parent = this.findParentFile(dir.directories, selectedFile);
-                    if (parent) {
-                        return parent;
-                    }
-                }
-                return null; // Если родитель не найден
-            },
-            confirmDeleteFile(file) {
-                this.selectedFile = file;
-                this.dialogDeleteFile = true;
-            },
-
-            async deleteSelectedFile() {
-                try {
-                    await api.deleteFileRoute(this.selectedFile.url);
-
-                    // Логика удаления файла из локального массива директорий
-                    const parent = this.findParentFile(this.directories, this.selectedFile);
-
-                    if (parent) {
-                        parent.files = parent.files.filter(f => f !== this.selectedFile);
-                    }
-
-                } catch (error) {
-                    console.error('Ошибка удаления файла:', error);
-                } finally {
-                    this.dialogDeleteFile = false;
-                }
-            },
+            } catch (error) {
+                console.error('Ошибка удаления директории:', error);
+            } finally {
+                this.dialogDeleteDir = false;
+            }
         },
-    }
+
+        findParent(directories, dir) {
+            for (const d of directories) {
+                if (d.directories.includes(dir)) {
+                    return d;
+                }
+
+                const found = this.findParent(d.directories, dir);
+
+                if (found) return found;
+            }
+
+            return null;
+        },
+        findParentFile(directories, selectedFile) {
+            for (const dir of directories) {
+                if (dir.files.includes(selectedFile)) {
+                    return dir; // Возвращаем родительский каталог
+                }
+                // Рекурсивно ищем в подкаталогах
+                const parent = this.findParentFile(dir.directories, selectedFile);
+                if (parent) {
+                    return parent;
+                }
+            }
+            return null; // Если родитель не найден
+        },
+        confirmDeleteFile(file) {
+            this.selectedFile = file;
+            this.dialogDeleteFile = true;
+        },
+
+        async deleteSelectedFile() {
+            try {
+                await api.deleteFileRoute(this.selectedFile.url);
+
+                // Логика удаления файла из локального массива директорий
+                const parent = this.findParentFile(this.directories, this.selectedFile);
+
+                if (parent) {
+                    parent.files = parent.files.filter(f => f !== this.selectedFile);
+                }
+
+            } catch (error) {
+                console.error('Ошибка удаления файла:', error);
+            } finally {
+                this.dialogDeleteFile = false;
+            }
+        },
+    },
+}
 </script>
 
 <style scoped>
-    .v-card {
-        cursor: pointer;
-    }
+.v-card {
+    cursor: pointer;
+}
 
-    .bg-light-blue {
-        background-color: #e3f2fd !important;
-        /* Цвет фона для открытой папки */
-    }
+.bg-light-blue {
+    background-color: #e3f2fd !important;
+    /* Цвет фона для открытой папку */
+}
 </style>

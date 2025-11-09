@@ -28,7 +28,7 @@ jobs:
           cat > .env <<'EOF'
           VITE_API_URL=${{ secrets.VITE_API_URL }}
           VITE_APP_SECRET_KEY=${{ secrets.VITE_APP_SECRET_KEY }}
-          VITE_RECAPTCHA${{ secrets.VITE_RECAPTCHA }}
+          VITE_RECAPTCHA_SITE_KEY${{ secrets.VITE_RECAPTCHA_SITE_KEY }}
           EOF
 
       - name: "🏗 Build"

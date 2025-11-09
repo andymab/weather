@@ -1,16 +1,28 @@
 <template>
     <v-list>
-        <v-list-item :prepend-avatar="$store.getters.getUserAvatar" :subtitle="$store.getters.getUserEmail"
-            :title="$store.getters.getUserName" to="/profile">
+        <v-list-item 
+            :prepend-avatar="userAvatar" 
+            :subtitle="userEmail"
+            :title="userName" 
+            to="/profile"
+        >
         </v-list-item>
-        <v-list-item v-for="(item, index) in allowedOptions" :key="index" @click="handleClick(item)"
-            :prepend-icon="item.icon" :title="item.title" :value="item.title">
+        <v-list-item 
+            v-for="(item, index) in allowedOptions" 
+            :key="index" 
+            @click="handleClick(item)"
+            :prepend-icon="item.icon" 
+            :title="item.title" 
+            :value="item.title"
+        >
         </v-list-item>
     </v-list>
 </template>
 
 <script>
+import { useAuthStore } from '@/stores/auth';
 import permission from './permissions.mjs'
+
 export default {
     name: 'MenuIsUserAuth',
     mixins: [permission],
@@ -41,11 +53,25 @@ export default {
     computed: {
         allowedOptions() {
             return this.actions.filter(action => this[action.permission]);
+        },
+        // Добавляем computed свойства для Pinia store
+        userAvatar() {
+            const authStore = useAuthStore();
+            return authStore.getUserAvatar;
+        },
+        userEmail() {
+            const authStore = useAuthStore();
+            return authStore.getUserEmail;
+        },
+        userName() {
+            const authStore = useAuthStore();
+            return authStore.getUserName;
         }
     },
     methods: {
         logout() {
-            this.$store.dispatch('logout');
+            const authStore = useAuthStore();
+            authStore.logout();
             this.$router.push('/');
         },
         handleClick(item) {

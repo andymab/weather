@@ -155,14 +155,14 @@ export default {
       try {
         await api.createUserWithPassword(this.form)
         
-        this.$toast.success('Пользователь успешно создан')
+        this.$notify.success('Пользователь успешно создан')
         this.$emit('refresh')
         this.close()
         this.resetForm()
         
       } catch (error) {
         console.error('Ошибка при создании пользователя:', error)
-        this.$toast.error(error.response?.data?.message || 'Ошибка при создании пользователя')
+        this.$notify.error(error.response?.data?.message || 'Ошибка при создании пользователя')
       } finally {
         this.loading = false
       }

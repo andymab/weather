@@ -29,6 +29,7 @@
     <v-main class="background">
       <v-container fluid class="mx-auto pa-0">
         <router-view />
+        <GlobalNotifier />
       </v-container>
     </v-main>
   </v-app>
@@ -37,18 +38,11 @@
 <script>
 import permission from './Auth/permissions.mjs';
 import MenuIsUserAuth from './Auth/MenuIsUserAuth.vue';
+import GlobalNotifier from '@/components/GlobalNotifier.vue'
 export default {
   name: 'App',
-  components: { MenuIsUserAuth },
+  components: { MenuIsUserAuth, GlobalNotifier },
   mixins: [permission],
-  data() {
-    return {
-
-    }
-  },
-  async mounted() {
-
-  },
 
   methods: {
     login() { this.$router.push('/login') },

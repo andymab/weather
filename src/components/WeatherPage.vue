@@ -138,7 +138,7 @@
     import Notification from './Notification.vue';
     import DialogForMap from './DialogForMap.vue';
 
-    import { mapGetters } from 'vuex';
+import { useAuthStore } from '@/stores/auth';
 
     import { format, parseISO } from 'date-fns';
     import { ru } from 'date-fns/locale';
@@ -177,6 +177,8 @@
                 customLat: 0,
                 customLon: 0,
                 customHeight: 0,
+                loading: false,
+                errors: {}
             };
         },
         mounted() {
@@ -185,17 +187,27 @@
         watch: {
             selectedLocations: {
                 handler(newValue, oldValue) {
-                    this.customName = newValue[0].title;
-                    this.customLat = newValue[0].lat;
-                    this.customLon = newValue[0].lon;
-                    this.customHeight = newValue[0].elevation;
+                    if (newValue.length > 0 && newValue[0]) {
+                        this.customName = newValue[0].title;
+                        this.customLat = newValue[0].lat;
+                        this.customLon = newValue[0].lon;
+                        this.customHeight = newValue[0].elevation;
+                    }
                 },
                 deep: true // Убедитесь, что отслеживаются вложенные изменения
             }
 
         },
         computed: {
-            ...mapGetters(['isUserAuth', 'isUserAdmin']),
+            // Заменяем Vuex mapGetters на Pinia computed свойства
+            isUserAuth() {
+                const authStore = useAuthStore();
+                return authStore.isUserAuth;
+            },
+            isUserAdmin() {
+                const authStore = useAuthStore();
+                return authStore.isUserAdmin;
+            },
             isXs() {
                 return this.$vuetify.display.xs;
             },
@@ -206,7 +218,7 @@
                 return [];
             },
             getFirstElevation() {
-                if (this.selectedLocations.length > 0) {
+                if (this.selectedLocations.length > 0 && this.selectedLocations[0]) {
                     return parseInt(this.selectedLocations[0].elevation) || 0;
                 }
                 return 0;
@@ -350,6 +362,10 @@
                 console.error('Ошибка получения данных о погоде:', error);
                 alert('Не удалось получить данные о погоде. Проверьте координаты.');
             }
+        },
+        message(message, status) {
+            status = typeof status === 'undefined' ? 'success' : status === true ? 'success' : 'error';
+            this.$refs.notification.notify(message, status);
         },
     },
 };

@@ -1,43 +1,40 @@
-// import { computed } from "vue";
+// src/Auth/permissions.mjs
+import { useAuthStore } from '@/stores/auth';
 
-// userMixin.js
 export default {
   computed: {
-    Auth(){
-      return this.$store.getters.getUser;
+    // Получаем весь store для обратной совместимости
+    Auth() {
+      const authStore = useAuthStore();
+      return authStore.user;
     },
     userName() {
-      return this.$store.getters.getUserName;
+      const authStore = useAuthStore();
+      return authStore.getUserName;
     },
     userRole() {
-      return this.$store.getters.getUserRole; // Получаем роль пользователя
+      const authStore = useAuthStore();
+      return authStore.getUserRole;
     },
     userPaid() {
-      return this.$store.getters.getUserPaid; 
+      const authStore = useAuthStore();
+      return authStore.user?.paid || false;
     },
     userEmail() {
-      return this.$store.getters.getUserEmail; 
+      const authStore = useAuthStore();
+      return authStore.getUserEmail;
     },
-    isUserAllowedToUpload(){
-      if(this.userRole === 'uploader' || this.userRole === 'admin') {
-        return true;
-      }
-      return false;
+    isUserAllowedToUpload() {
+      const authStore = useAuthStore();
+      return authStore.userRole === 'uploader' || authStore.userRole === 'admin';
     },
-    isAdmin(){
-      if(this.userRole === 'admin') {
-        return true;
-      }
-      return false;
+    isAdmin() {
+      const authStore = useAuthStore();
+      return authStore.isUserAdmin;
     },
-    isUserAuth(){
-      if(this.Auth) {
-        return true;
-      }
-      return false;
+    isUserAuth() {
+      const authStore = useAuthStore();
+      return authStore.isUserAuth;
     }
-  },
-  methods: {
-
-  },
+  }
 };

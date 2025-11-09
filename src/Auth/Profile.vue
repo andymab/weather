@@ -40,22 +40,14 @@
 <script>
 import AlertChackbar from "./util/AlertChackbar.vue"
 import ImagePickerDialog from './util/ImagePickerDialog.vue';
-
-
 import api from "./api"
-
+import { useAuthStore } from '@/stores/auth';
 
 export default {
   name: 'Profile',
   components: {
-    AlertChackbar, ImagePickerDialog,
-  },
-  created() {
-    const user = this.$store.getters.getUser;
-    this.form.name = user.name;
-    this.form.email = user.email;
-    this.form.media_content = user.media_content;
-    this.imageUrl = this.form.media_content ? api.getBaseUrl() + '/public/' + this.form.media_content : ''; // по хорошему формируем пустой img-src, но пока так
+    AlertChackbar, 
+    ImagePickerDialog,
   },
   data() {
     return {
@@ -63,12 +55,14 @@ export default {
         name: '',
         email: '',
         media_content: '',
-
       },
       products: [],
       imageUrl: null,
       showDialog: false,
       valid: false,
+      loading: false,
+      file: null,
+      password: '',
       errors: {},
       rules: {
         required: (value) => !!value || 'Обязательное поле',
@@ -82,25 +76,33 @@ export default {
           );
         },
       },
-
     };
+  },
+  created() {
+    // Используем Pinia store вместо Vuex
+    const authStore = useAuthStore();
+    const user = authStore.user;
+    
+    this.form.name = user.name;
+    this.form.email = user.email;
+    this.form.media_content = user.media_content;
+    this.imageUrl = this.form.media_content ? api.getBaseUrl() + '/public/' + this.form.media_content : '';
   },
   computed: {
     initialsUser() {
-      const words = this.form.name.split(' '); // Разделяем строку на слова
-      const initials = words.map(word => word.charAt(0).toUpperCase()).join(''); // Получаем первые буквы и объединяем их
-      return initials; // Возвращаем инициалы
+      const words = this.form.name.split(' ');
+      const initials = words.map(word => word.charAt(0).toUpperCase()).join('');
+      return initials;
     }
   },
   methods: {
     triggerSnackbar(message, color) {
-      this.$refs.snackbar.showSnackbar(message, color); //// info, primary, secondary, success, warning, error
+      this.$refs.snackbar.showSnackbar(message, color);
     },
     async updateProfile() {
       if (this.$refs.form.validate()) {
         this.loading = true;
         const formData = new FormData();
-
 
         formData.append('file', this.file);
         formData.append('name', this.form.name);
@@ -114,30 +116,39 @@ export default {
         try {
           const response = await api.updateUserProfile(formData);
           const data = response.data;
+          
           if (data.status === 'success') {
-            this.$store.dispatch('user', data.user);
-
+            // Используем Pinia store вместо Vuex
+            const authStore = useAuthStore();
+            authStore.setUser(data.user);
+            
+            // Обновляем изображение если оно изменилось
+            if (data.user.media_content) {
+              this.imageUrl = api.getBaseUrl() + '/public/' + data.user.media_content;
+            }
+            
+            this.triggerSnackbar('Профиль успешно обновлен', 'success');
+          } else {
+            this.triggerSnackbar(data.message || 'Ошибка обновления профиля', 'error');
           }
-          this.triggerSnackbar(data.message, 'info');
         } catch (error) {
-          this.triggerSnackbar(error, 'warnuing');
-          this.errors = error.response.data.errors;
+          console.error('Update profile error:', error);
+          this.triggerSnackbar(error.response?.data?.message || 'Ошибка обновления профиля', 'warning');
+          this.errors = error.response?.data?.errors || {};
         } finally {
           this.loading = false;
         }
       }
-
     },
     updateAvatar({ imageUrl, file }) {
       this.showDialog = false;
-      this.imageUrl = imageUrl; // Обновляем URL аватара с помощью выбранного изображения
+      this.imageUrl = imageUrl;
       this.file = file;
     },
     openImageDialog() {
       this.showDialog = true;
     }
   }
-
 };
 </script>
 
