@@ -26,8 +26,8 @@ jobs:
       - name: "🔐 Create environment file (optional)"
         run: |
           cat > .env <<'EOF'
-          VITE_BASE_URL=${{ secrets.VITE_BASE_URL }}
-          VITE_API_KEY=${{ secrets.VITE_API_KEY }}
+          VITE_API_URL=${{ secrets.VITE_API_URL }}
+          VITE_APP_SECRET_KEY=${{ secrets.VITE_APP_SECRET_KEY }}
           VITE_RECAPTCHA${{ secrets.VITE_RECAPTCHA }}
           EOF
 
