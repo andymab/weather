@@ -34,7 +34,7 @@ vue
     </v-data-table>
 
     <UserEditDialog v-model="editDialog" :user="selectedUser" :roles="roles" @refresh="fetchUsers"
-      @close="dialog = false" />
+      @close="editDialog = false" />
 
     <UserCreateDialog v-model="createDialog" :roles="roles" @refresh="fetchUsers" @close="createDialog = false" />
   </v-container>

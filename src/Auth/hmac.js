@@ -1,4 +1,9 @@
 export async function generateHMAC(secretKey, data) {
+
+    if (!window.isSecureContext) {
+        throw new Error('Web Crypto API requires secure context (HTTPS or localhost)');
+    }
+
     // Проверка поддержки Web Crypto API
     if (!crypto.subtle) {
         throw new Error('Web Crypto API is not supported in this environment');
