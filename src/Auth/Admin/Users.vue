@@ -102,6 +102,9 @@ export default {
       this.selectedUser = user;
       this.editDialog  = true;
     },
+    openCreateDialog(){
+      this.createDialog = true
+    }
   },
   mounted() {
     this.fetchUsers();
