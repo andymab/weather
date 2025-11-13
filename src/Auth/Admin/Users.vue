@@ -43,7 +43,7 @@ vue
 <script>
 import api from "../api"
 import UserEditDialog from './resource/UserEditDialog.vue';
-import UserCreateDialog from './resource/UserCreateDialog.vue'; 
+import UserCreateDialog from './resource/UserCreateDialog.vue';
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
@@ -78,6 +78,9 @@ export default {
     }
   },
   methods: {
+    openCreateDialog() {
+      this.createDialog = true;
+    },
     formatPaymentTime(dateString) {
       if (dateString) {
         const date = parseISO(dateString); // Преобразуем строку в объект Date
@@ -100,7 +103,7 @@ export default {
     },
     editUser(user) {
       this.selectedUser = user;
-      this.editDialog  = true;
+      this.editDialog = true;
     },
   },
   mounted() {

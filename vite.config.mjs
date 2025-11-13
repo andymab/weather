@@ -12,7 +12,7 @@ export default defineConfig({
     },
   },
   
-  // УБЕРИТЕ ЭТО - это переопределяет нормальную загрузку .env
+  // это переопределяет нормальную загрузку .env
   // define: {
   //   __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
   //   'import.meta.env.VITE_API_URL': JSON.stringify(process.env.VITE_API_URL),
